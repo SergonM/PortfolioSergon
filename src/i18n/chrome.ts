@@ -14,6 +14,7 @@ export const chromeEntries: ChromeEntry[] = [
   { id: 'segments', folio: 'iii', title: { en: 'Segments: AI & ML · Security · Business & Compliance', es: 'Segmentos: IA y ML · Seguridad · Negocio y Compliance' }, short: { en: 'Segments', es: 'Segmentos' } },
   { id: 'investigation', folio: 'iv', title: { en: 'Featured investigation', es: 'Investigación destacada' }, short: { en: 'Investigation', es: 'Investigación' } },
   { id: 'simulator', folio: 'iv·b', title: { en: 'What if…? The model, live', es: '¿Y si…? El modelo, en vivo' }, short: { en: 'What if…?', es: '¿Y si…?' } },
+  { id: 'brief', folio: 'iv·c', title: { en: 'What an EPS or the Ministry could do with this', es: 'Qué haría una EPS o MinSalud con esto' }, short: { en: 'The brief', es: 'El cierre' } },
   { id: 'risk-factors', folio: 'v', title: { en: 'Risk factors', es: 'Factores de riesgo' }, short: { en: 'Risk factors', es: 'Riesgos' } },
   { id: 'auditor', folio: 'vi', title: { en: "Auditor's report", es: 'Informe del auditor' }, short: { en: 'Auditor', es: 'Auditor' } },
   { id: 'investor-relations', folio: 'vii', title: { en: 'Investor relations', es: 'Relación con inversionistas' }, short: { en: 'Investors', es: 'Inversionistas' } },
