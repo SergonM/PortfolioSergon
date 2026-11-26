@@ -15,6 +15,10 @@ export const memo: MemoLine[] = [
 export const hero = {
   en: {
     deskLabel: 'Sergio González, Inc. · Annual Report 2026',
+    seeking: 'Now seeking roles in',
+    roles: ['AI & ML', 'Security', 'Business & Compliance'],
+    nextLetter: 'Cleared. Now read the letter',
+    contactCta: 'Or schedule it now on LinkedIn',
     claim: 'An engineer who builds AI and understands compliance, risk and business.',
     sealTop: 'Audited', sealBottom: 'by the reader',
     memoKicker: 'Executive summary',
@@ -36,6 +40,10 @@ export const hero = {
   },
   es: {
     deskLabel: 'Sergio González, Inc. · Informe Anual 2026',
+    seeking: 'Busca roles en',
+    roles: ['IA y ML', 'Seguridad', 'Negocio y Compliance'],
+    nextLetter: 'Aprobado. Ahora lee la carta',
+    contactCta: 'O agéndala ya por LinkedIn',
     claim: 'Ingeniero que construye IA y entiende compliance, riesgo y negocio.',
     sealTop: 'Auditado', sealBottom: 'por quien lee',
     memoKicker: 'Resumen ejecutivo',
