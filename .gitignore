@@ -5,3 +5,9 @@ dist/
 .env.*
 .DS_Store
 .wrangler/
+
+# DANE microdata and project files: never commit (DANE forbids redistribution)
+ml/data/
+*.csv
+*.zip
+*.pbix

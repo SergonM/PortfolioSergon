@@ -4,7 +4,7 @@ interface Props { locale: Locale }
 const { locale } = Astro.props;
 const t = strings[locale];
 const roman = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
-const anchors: (string | null)[] = ['letter', 'highlights', 'segments', null, null, null, null];
+const anchors: (string | null)[] = ['letter', 'highlights', 'segments', 'investigation', null, null, null];
 ---
 <nav id="contents" class="wrap toc" aria-labelledby="toc-title">
   <h2 id="toc-title">{t.contents}</h2>

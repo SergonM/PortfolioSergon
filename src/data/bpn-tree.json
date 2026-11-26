@@ -1,0 +1,466 @@
+{
+ "source": "DANE, Estadísticas Vitales (nacimientos)",
+ "years": [
+  "2022"
+ ],
+ "target": "Birth weight under 2,500 g (PESO_NAC bands 1–4)",
+ "excluded": [
+  "T_GES (gestational weeks)"
+ ],
+ "params": {
+  "max_depth": 5,
+  "min_samples_leaf": 2000,
+  "test_size": 0.2,
+  "seed": 20241115
+ },
+ "births": 549000,
+ "base_rate": 0.1044,
+ "metrics": {
+  "auc": 0.65,
+  "brier": 0.0858,
+  "brier_base": 0.09354,
+  "top_fifth_rate": 0.1796,
+  "bottom_fifth_rate": 0.0602
+ },
+ "features": [
+  {
+   "key": "age",
+   "kind": "ordinal",
+   "labels": {
+    "en": [
+     "Under 20",
+     "20–24",
+     "25–34",
+     "35–39",
+     "40 or older"
+    ],
+    "es": [
+     "Menos de 20",
+     "20–24",
+     "25–34",
+     "35–39",
+     "40 o más"
+    ]
+   }
+  },
+  {
+   "key": "edu",
+   "kind": "ordinal",
+   "labels": {
+    "en": [
+     "None or primary",
+     "Some secondary",
+     "High school",
+     "Technical",
+     "University"
+    ],
+    "es": [
+     "Ninguno o primaria",
+     "Secundaria incompleta",
+     "Bachillerato",
+     "Técnico o tecnológico",
+     "Universitario"
+    ]
+   }
+  },
+  {
+   "key": "visits",
+   "kind": "ordinal",
+   "labels": {
+    "en": [
+     "None",
+     "1–3",
+     "4–6",
+     "7 or more"
+    ],
+    "es": [
+     "Ninguno",
+     "1–3",
+     "4–6",
+     "7 o más"
+    ]
+   }
+  },
+  {
+   "key": "insurance",
+   "kind": "nominal",
+   "labels": {
+    "en": [
+     "Contributory (employed)",
+     "Subsidised",
+     "Special regime",
+     "Uninsured"
+    ],
+    "es": [
+     "Contributivo",
+     "Subsidiado",
+     "Régimen especial",
+     "Sin afiliación"
+    ]
+   }
+  },
+  {
+   "key": "area",
+   "kind": "nominal",
+   "labels": {
+    "en": [
+     "Town or city",
+     "Village",
+     "Rural"
+    ],
+    "es": [
+     "Cabecera municipal",
+     "Centro poblado",
+     "Rural disperso"
+    ]
+   }
+  },
+  {
+   "key": "multiple",
+   "kind": "ordinal",
+   "labels": {
+    "en": [
+     "One baby",
+     "Twins or more"
+    ],
+    "es": [
+     "Un bebé",
+     "Gemelos o más"
+    ]
+   }
+  },
+  {
+   "key": "children",
+   "kind": "ordinal",
+   "labels": {
+    "en": [
+     "First child",
+     "Second",
+     "Third or fourth",
+     "Fifth or later"
+    ],
+    "es": [
+     "Primer hijo",
+     "Segundo",
+     "Tercero o cuarto",
+     "Quinto o más"
+    ]
+   }
+  }
+ ],
+ "importance": [
+  {
+   "feature": "multiple",
+   "share": 0.855
+  },
+  {
+   "feature": "visits",
+   "share": 0.1
+  },
+  {
+   "feature": "children",
+   "share": 0.027
+  },
+  {
+   "feature": "age",
+   "share": 0.015
+  },
+  {
+   "feature": "insurance",
+   "share": 0.003
+  },
+  {
+   "feature": "edu",
+   "share": 0.0
+  },
+  {
+   "feature": "area",
+   "share": 0.0
+  }
+ ],
+ "columns": [
+  {
+   "feature": "age",
+   "kind": "ordinal"
+  },
+  {
+   "feature": "edu",
+   "kind": "ordinal"
+  },
+  {
+   "feature": "visits",
+   "kind": "ordinal"
+  },
+  {
+   "feature": "insurance",
+   "kind": "onehot",
+   "value": 0
+  },
+  {
+   "feature": "insurance",
+   "kind": "onehot",
+   "value": 1
+  },
+  {
+   "feature": "insurance",
+   "kind": "onehot",
+   "value": 2
+  },
+  {
+   "feature": "insurance",
+   "kind": "onehot",
+   "value": 3
+  },
+  {
+   "feature": "area",
+   "kind": "onehot",
+   "value": 0
+  },
+  {
+   "feature": "area",
+   "kind": "onehot",
+   "value": 1
+  },
+  {
+   "feature": "area",
+   "kind": "onehot",
+   "value": 2
+  },
+  {
+   "feature": "multiple",
+   "kind": "ordinal"
+  },
+  {
+   "feature": "children",
+   "kind": "ordinal"
+  }
+ ],
+ "nodes": [
+  {
+   "leaf": false,
+   "col": 10,
+   "thr": 0.5,
+   "left": 1,
+   "right": 32,
+   "rate": 0.1044
+  },
+  {
+   "leaf": false,
+   "col": 2,
+   "thr": 2.5,
+   "left": 2,
+   "right": 17,
+   "rate": 0.0931
+  },
+  {
+   "leaf": false,
+   "col": 11,
+   "thr": 0.5,
+   "left": 3,
+   "right": 10,
+   "rate": 0.1183
+  },
+  {
+   "leaf": false,
+   "col": 2,
+   "thr": 1.5,
+   "left": 4,
+   "right": 7,
+   "rate": 0.1404
+  },
+  {
+   "leaf": false,
+   "col": 2,
+   "thr": 0.5,
+   "left": 5,
+   "right": 6,
+   "rate": 0.1707
+  },
+  {
+   "leaf": true,
+   "rate": 0.2009,
+   "n": 4800
+  },
+  {
+   "leaf": true,
+   "rate": 0.1628,
+   "n": 18500
+  },
+  {
+   "leaf": false,
+   "col": 0,
+   "thr": 2.5,
+   "left": 8,
+   "right": 9,
+   "rate": 0.1303
+  },
+  {
+   "leaf": true,
+   "rate": 0.1273,
+   "n": 67300
+  },
+  {
+   "leaf": true,
+   "rate": 0.2221,
+   "n": 2200
+  },
+  {
+   "leaf": false,
+   "col": 0,
+   "thr": 2.5,
+   "left": 11,
+   "right": 14,
+   "rate": 0.1025
+  },
+  {
+   "leaf": false,
+   "col": 2,
+   "thr": 1.5,
+   "left": 12,
+   "right": 13,
+   "rate": 0.0967
+  },
+  {
+   "leaf": true,
+   "rate": 0.1124,
+   "n": 35300
+  },
+  {
+   "leaf": true,
+   "rate": 0.0894,
+   "n": 74900
+  },
+  {
+   "leaf": false,
+   "col": 11,
+   "thr": 2.5,
+   "left": 15,
+   "right": 16,
+   "rate": 0.135
+  },
+  {
+   "leaf": true,
+   "rate": 0.1445,
+   "n": 14400
+  },
+  {
+   "leaf": true,
+   "rate": 0.1081,
+   "n": 5100
+  },
+  {
+   "leaf": false,
+   "col": 11,
+   "thr": 0.5,
+   "left": 18,
+   "right": 25,
+   "rate": 0.0662
+  },
+  {
+   "leaf": false,
+   "col": 0,
+   "thr": 2.5,
+   "left": 19,
+   "right": 22,
+   "rate": 0.0745
+  },
+  {
+   "leaf": false,
+   "col": 4,
+   "thr": 0.5,
+   "left": 20,
+   "right": 21,
+   "rate": 0.0722
+  },
+  {
+   "leaf": true,
+   "rate": 0.0777,
+   "n": 50400
+  },
+  {
+   "leaf": true,
+   "rate": 0.0659,
+   "n": 43600
+  },
+  {
+   "leaf": false,
+   "col": 1,
+   "thr": 3.5,
+   "left": 23,
+   "right": 24,
+   "rate": 0.1036
+  },
+  {
+   "leaf": true,
+   "rate": 0.1024,
+   "n": 2500
+  },
+  {
+   "leaf": true,
+   "rate": 0.1042,
+   "n": 4800
+  },
+  {
+   "leaf": false,
+   "col": 3,
+   "thr": 0.5,
+   "left": 26,
+   "right": 29,
+   "rate": 0.0584
+  },
+  {
+   "leaf": false,
+   "col": 0,
+   "thr": 2.5,
+   "left": 27,
+   "right": 28,
+   "rate": 0.0511
+  },
+  {
+   "leaf": true,
+   "rate": 0.048,
+   "n": 48600
+  },
+  {
+   "leaf": true,
+   "rate": 0.0681,
+   "n": 9100
+  },
+  {
+   "leaf": false,
+   "col": 0,
+   "thr": 2.5,
+   "left": 30,
+   "right": 31,
+   "rate": 0.0669
+  },
+  {
+   "leaf": true,
+   "rate": 0.0635,
+   "n": 36400
+  },
+  {
+   "leaf": true,
+   "rate": 0.0761,
+   "n": 13100
+  },
+  {
+   "leaf": false,
+   "col": 2,
+   "thr": 2.5,
+   "left": 33,
+   "right": 34,
+   "rate": 0.7156
+  },
+  {
+   "leaf": true,
+   "rate": 0.7563,
+   "n": 4300
+  },
+  {
+   "leaf": true,
+   "rate": 0.6681,
+   "n": 3700
+  }
+ ]
+}
