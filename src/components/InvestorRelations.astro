@@ -80,7 +80,7 @@ const e = contact.email;
   h2 { font-size: var(--step-5); line-height: .95; }
   .lede { margin: 0; color: var(--ink-soft); max-width: var(--measure); }
 
-  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; padding-bottom: clamp(3rem, 7vw, 5rem); }
+  .grid { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(1.5rem, 3.5vw, 2.75rem); align-items: start; padding-bottom: clamp(3rem, 7vw, 5rem); }
 
   /* the CV: a sheet of paper you can pick up */
   .cv { position: relative; display: grid; gap: .5rem; text-decoration: none; background: var(--ink); color: #e9e8df; padding: 1.5rem 1.5rem 1.4rem; }
@@ -101,13 +101,13 @@ const e = contact.email;
   .cv:hover .cv-go { transform: translate3d(0, 4px, 0); }
 
   .channels { margin: 0; border-top: 2px solid var(--ink); }
-  .channels div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1rem; padding-block: .8rem; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .channels div { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 1rem; padding-block: .8rem; border-bottom: 1px solid var(--rule); align-items: baseline; }
   dt { color: var(--ink-soft); }
-  dd { margin: 0; overflow-wrap: anywhere; }
+  dd { margin: 0; overflow-wrap: break-word; min-width: 0; }
 
   .fh { margin: 0 0 .5rem; color: var(--seal); }
   table { width: 100%; border-collapse: collapse; border-top: 2px solid var(--ink); }
-  th { text-align: left; font-weight: 400; color: var(--ink-soft); padding: .7rem 1rem .7rem 0; vertical-align: baseline; width: 42%; }
+  th { text-align: left; font-weight: 400; color: var(--ink-soft); padding: .7rem 1rem .7rem 0; vertical-align: baseline; width: 36%; }
   td { padding: .7rem 0; vertical-align: baseline; }
   tr { border-bottom: 1px solid var(--rule); }
 

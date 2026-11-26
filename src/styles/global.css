@@ -78,3 +78,4 @@ html.reticle-on, html.reticle-on * { cursor: none !important; }
 /* ---------- Print details ---------- */
 ::selection { background: var(--seal); color: var(--paper); }
 html { scrollbar-color: var(--ink-soft) var(--paper-2); }
+html:not(.js) [data-js-only] { display: none !important; }
