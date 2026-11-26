@@ -46,8 +46,8 @@ jobs:
         run: |
           set -euo pipefail
           echo "Worker: $URL"
-          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Origin: https://evil.example' -H 'content-type: application/json' -d '{"history":[{"role":"user","text":"hi"}]}' "$URL")
+          code=$(curl -s --max-time 30 -o /dev/null -w '%{http_code}' -X POST -H 'Origin: https://evil.example' -H 'content-type: application/json' -d '{"history":[{"role":"user","text":"hi"}]}' "$URL")
           echo "Foreign origin -> $code (want 403)"; test "$code" = 403
-          out=$(curl -s -w '\n%{http_code}' -X POST -H 'Origin: https://sergonm.github.io' -H 'content-type: application/json' \
+          out=$(curl -s --max-time 120 -w '\n%{http_code}' -X POST -H 'Origin: https://sergonm.github.io' -H 'content-type: application/json' \
             -d '{"history":[{"role":"user","text":"In one sentence, what has he built with AI?"}]}' "$URL")
           echo "$out"; test "$(echo "$out" | tail -n1)" = 200

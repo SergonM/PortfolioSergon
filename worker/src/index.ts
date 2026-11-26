@@ -49,26 +49,60 @@ function cors(origin: string | null, env: Env): Record<string, string> {
 const json = (body: unknown, status: number, headers: Record<string, string>) =>
   new Response(JSON.stringify(body), { status, headers: { ...headers, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 
+/** Why a model call failed, safe to show publicly: model, HTTP status and Google's status enum, never the message. */
+class Upstream extends Error {}
+
+const TIMEOUT_MS = 20_000;   // per call
+const BUDGET_MS = 45_000;    // per visitor question, across all retries
+
 async function ask(env: Env, history: Turn[]): Promise<string> {
-  const models = [...new Set([env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-2.5-flash'].filter(Boolean) as string[])];
-  const body = JSON.stringify({
+  const models = [...new Set([env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite'].filter(Boolean) as string[])];
+  const base = {
     systemInstruction: { parts: [{ text: SYSTEM }] },
     contents: history.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
-    generationConfig: { temperature: 0.35, maxOutputTokens: 1024 },
-  });
-  let last = '';
+  };
+  const reasons: string[] = [];
+  const deadline = Date.now() + BUDGET_MS;
   for (const model of models) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, body,
-    });
-    if (r.status === 404) { last = `model ${model} not found`; continue; }
-    if (!r.ok) throw new Error(`gemini ${r.status}`);
-    const data: any = await r.json();
-    const text = (data.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim();
-    if (text) return text;
-    last = 'empty answer';
+    // Thinking tokens count against maxOutputTokens and slow the answer down; these replies are short and grounded,
+    // so ask for no thinking first and retry without the setting if a model refuses it.
+    for (const thinking of [true, false]) {
+      const left = deadline - Date.now();
+      if (left < 3_000) { reasons.push('out of time'); throw new Upstream(reasons.join('; ')); }
+      const generationConfig: Record<string, unknown> = { temperature: 0.35, maxOutputTokens: 2048 };
+      if (thinking) generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      let r: Response;
+      try {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+          body: JSON.stringify({ ...base, generationConfig }),
+          signal: AbortSignal.timeout(Math.min(TIMEOUT_MS, left)),
+        });
+      } catch (e) {
+        reasons.push(`${model}: ${(e as Error).name === 'TimeoutError' ? 'timeout' : 'network'}`);
+        break;
+      }
+      const data: any = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        const why = `${model}: ${r.status} ${String(data?.error?.status ?? '').replace(/[^A-Z_]/g, '')}`.trim();
+        console.error('gemini', why, data?.error?.message);
+        // A 400 with thinking on may just mean this model can't turn thinking off: retry once without it.
+        if (r.status === 400 && thinking && !/API[_ ]KEY/i.test(JSON.stringify(data?.error ?? ''))) { reasons.push(why); continue; }
+        // A bad or unauthorised key fails the same way on every model, so stop here.
+        const badKey = /API[_ ]KEY/i.test(JSON.stringify(data?.error ?? ''));
+        if (badKey || r.status === 401 || r.status === 403) throw new Upstream([...reasons, badKey ? `${why} (API key rejected)` : why].join('; '));
+        reasons.push(why);
+        break;
+      }
+      const cand = data.candidates?.[0];
+      const text = (cand?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text ?? '').join('').trim();
+      if (text) return text;
+      reasons.push(`${model}: empty (${cand?.finishReason ?? data?.promptFeedback?.blockReason ?? 'no candidate'})`);
+      break;
+    }
   }
-  throw new Error(last || 'no model');
+  throw new Upstream(reasons.join('; ') || 'no model');
 }
 
 export default {
@@ -99,7 +133,7 @@ export default {
       return json({ answer }, 200, headers);
     } catch (e) {
       console.error('analyst error', (e as Error).message);
-      return json({ error: 'upstream' }, 502, headers);
+      return json({ error: 'upstream', detail: e instanceof Upstream ? e.message.slice(0, 300) : 'internal' }, 502, headers);
     }
   },
 };
