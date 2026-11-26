@@ -1,7 +1,7 @@
 import type { Locale } from '../i18n/strings';
 
 /** Public URL of the Cloudflare Worker (worker/). Empty until it is deployed: the section stays hidden. */
-export const ANALYST_URL = '';
+export const ANALYST_URL = 'https://sgm-analyst.sergon20052005.workers.dev';
 
 export const analyst: Record<Locale, {
   kicker: string; title: string; lede: string; operator: string; opening: string; you: string; analyst: string;
