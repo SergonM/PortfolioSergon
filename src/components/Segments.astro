@@ -153,6 +153,21 @@ let folio = 0;
   .k3 p { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.25; }
   .c-folio { position: absolute; right: 1.25rem; bottom: .9rem; color: var(--ink-soft); }
 
+  /* pinned spreads must fit a short laptop screen (1366×768, 1280×720): scale type with the viewport height */
+  @media (min-width: 901px) and (max-height: 1000px) {
+    .pin { padding-top: 1.25rem; }
+    .case { width: min(92vw, 1240px); min-height: min(80svh, 640px); }
+    .c-left { gap: .8rem; padding: clamp(1rem, 2.6vh, 2rem) clamp(1.25rem, 2.5vw, 2.25rem); }
+    .c-title { font-size: clamp(1.4rem, .6rem + 2.6vh, 2.2rem); }
+    .c-kpi { padding-block: .6rem; }
+    .c-kpi .v { font-size: clamp(2.8rem, 1rem + 6vh, 5.5rem); }
+    .c-stack { line-height: 1.5; }
+    .steps { padding: clamp(1rem, 2.6vh, 2rem) clamp(1.25rem, 2.5vw, 2.25rem); gap: clamp(.9rem, 2.4vh, 1.75rem) 1.75rem; }
+    .step { padding-top: .7rem; gap: .35rem; }
+    .step p { font-size: clamp(.84rem, .42rem + 1.1vh, 1rem); line-height: 1.5; }
+    .k3 p { font-size: clamp(1rem, .5rem + 1.3vh, 1.35rem); line-height: 1.2; }
+  }
+
   @media (max-width: 900px) {
     .case { grid-template-columns: minmax(0, 1fr); width: 88vw; min-height: 0; }
     .case::before, .case::after { display: none; }

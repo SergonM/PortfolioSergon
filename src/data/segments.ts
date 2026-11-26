@@ -22,7 +22,7 @@ export interface Case {
   kpi: { value: L; label: L };
   stack: string;
   problem: L; decision: L; result: L; learning: L;
-  source: SourceId | 'EXP-TESS' | 'PRJ-FC';
+  source: SourceId | 'EXP-TESS' | 'PRJ-FC' | 'PRJ-KG';
   link?: string;
   jnj?: boolean;
 }
@@ -61,6 +61,17 @@ export const cases: Case[] = [
     decision: { en: 'I wrote the Gaussian and bilateral filters myself, loop by loop, and checked them against the built-in versions. Then I used a flash photo to clean up a dark no-flash shot, boosted local contrast, and recovered a blurred image with 300 rounds of deconvolution.', es: 'Escribí yo mismo los filtros gaussiano y bilateral, ciclo por ciclo, y los comparé con las versiones de MATLAB. Después usé una foto con flash para limpiar una sin flash, mejoré el contraste local y recuperé una imagen borrosa con 300 rondas de deconvolución.' },
     result: { en: 'Hand-written filters that match the built-ins, a usable no-flash photo, and a deblurred image with its error tracked at every iteration.', es: 'Filtros escritos a mano que coinciden con los de MATLAB, una foto sin flash que ya se puede usar y una imagen recuperada con su error medido en cada iteración.' },
     learning: { en: 'Writing a filter by hand is slow, and that’s the point. Now I know what each parameter does to the picture.', es: 'Escribir un filtro a mano es lento, y de eso se trata. Ahora sé qué le hace cada parámetro a la imagen.' },
+  },
+  {
+    id: 'AI-04', segment: 'ai', source: 'PRJ-KG', link: 'https://github.com/ikerorozco/Knoledge-Graph-sql',
+    title: { en: 'A map of who wrote what, with whom and who paid for it', es: 'Un mapa de quién escribió qué, con quién y quién lo pagó' },
+    context: { en: 'UPM Madrid · 2025 · team of 3', es: 'UPM Madrid · 2025 · equipo de 3' },
+    kpi: { value: same('11'), label: { en: 'scientific papers turned into one map you can explore', es: 'artículos científicos convertidos en un solo mapa que se puede explorar' } },
+    stack: 'Python · Grobid · Hugging Face · Sentence Transformers · OpenAlex · OpenAIRE · RDF · Streamlit · Docker',
+    problem: { en: 'A pile of research PDFs says little on its own. Who worked with whom, which institutions and projects are behind each paper, and which papers talk about the same thing are all in there, scattered across pages nobody reads twice.', es: 'Un montón de PDFs de investigación, solos, dicen poco. Quién trabajó con quién, qué instituciones y proyectos hay detrás de cada artículo y cuáles hablan de lo mismo está ahí, regado en páginas que nadie lee dos veces.' },
+    decision: { en: 'Grobid pulled titles, authors and abstracts from each PDF. A language model picked out the organizations thanked in the acknowledgements, keeping only those it was 85% sure of. OpenAlex and OpenAIRE filled the gaps, and sentence embeddings linked papers on similar topics.', es: 'Grobid sacó títulos, autores y resúmenes de cada PDF. Un modelo de lenguaje encontró las organizaciones de los agradecimientos, quedándose solo con las que tenía 85 % de seguridad. OpenAlex y OpenAIRE completaron lo que faltaba, y los embeddings conectaron artículos de temas parecidos.' },
+    result: { en: 'A graph of papers, authors, institutions and projects, exported to RDF, plus a Streamlit app to explore it: a network, a search, a project timeline and a map. One Docker command runs it, and it has a DOI on Zenodo.', es: 'Un grafo de artículos, autores, instituciones y proyectos, exportado a RDF, y una app en Streamlit para explorarlo: red, buscador, línea de tiempo y mapa. Corre con un comando de Docker y tiene DOI en Zenodo.' },
+    learning: { en: 'Research software only counts if someone else can run it. Docker and the DOI mattered as much as the graph.', es: 'El software de investigación solo cuenta si otra persona lo puede correr. Docker y el DOI importaron tanto como el grafo.' },
   },
   // ------------------------------------------------------------------ Security
   {
