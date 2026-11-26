@@ -12,6 +12,7 @@ gsap.registerPlugin(ScrollTrigger, SplitText);
 export function initMotion() {
   // ---------- smooth scroll ----------
   const lenis = new Lenis({ lerp: 0.11, wheelMultiplier: 0.95 });
+  window.__lenis = lenis; // the report chrome (scripts/chrome) jumps and pauses through this instance
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add((t) => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
