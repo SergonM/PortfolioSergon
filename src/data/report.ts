@@ -26,33 +26,41 @@ export const sourceNames: Record<Locale, Record<SourceId, string>> = {
 
 export interface Paragraph { text: string; jnj?: boolean }
 
-/** Letter to shareholders. [n:ID] marks a footnote that cites a source ID. */
-export const letter: Record<Locale, { kicker: string; title: string; salutation: string; body: Paragraph[]; sign: string[] }> = {
+/** Letter to shareholders. [n:ID] marks a footnote; ==text== is passed over with the highlighter. */
+export const letter: Record<Locale, { kicker: string; title: string; salutation: string; body: Paragraph[]; sign: string[]; ps: string; pull: string; letterhead: string[]; sigLabel: string }> = {
   en: {
     kicker: 'Section i',
     title: 'Letter to shareholders',
     salutation: 'Dear shareholders,',
     body: [
-      { text: 'This company has one product, one employee and a 4.21 average out of 5.[n:EDU] The employee is me. This report covers what I have built so far, what I could build for you, and, in the risk factors, what I can’t do yet.' },
+      { text: 'This company has ==one product, one employee== and a 4.21 average out of 5.[n:EDU] The employee is me. This report covers what I have built so far, what I could build for you, and, in the risk factors, what I can’t do yet.' },
       { jnj: true, text: 'This year I went to work for real. As a Health Care Compliance intern at Johnson & Johnson Innovative Medicine I automated about 900 profile updates for healthcare professionals, and the 70 colleagues who used to do them by hand now spend 92 to 97 percent less time on each one.[n:EXP-JNJ] I also helped build three AI agents and improved a deviation reporting app used across Latin America.' },
-      { text: 'I have studied in three countries: Colombia, Spain and the United States.[n:EDU] Along the way, always in teams of three, I turned more than a million DANE birth records into a data warehouse to understand why some babies in Colombia are born underweight,[n:PRJ-NEO] and trained a model that puts citizen opinions in the right topic 97 times out of 100.[n:PRJ-OPI]' },
-      { text: 'My capstone, a forensic evidence system for Colombian banking, is where everything I care about meets: software that has to work, has to be secure, and has to hold up when an auditor starts asking questions.' },
-      { text: 'One rule for this report: no number I can’t back up. Each one has a footnote, and the auditor’s report at the end invites you to try to break the site yourself.' },
+      { text: 'I have studied in three countries: Colombia, Spain and the United States.[n:EDU] Along the way, always in teams of three, I turned more than a million DANE birth records into a data warehouse to understand why some babies in Colombia are born underweight,[n:PRJ-NEO] and trained a model that puts citizen opinions in the right topic ==97 times out of 100==.[n:PRJ-OPI]' },
+      { text: 'My capstone, ==a forensic evidence system== for Colombian banking, is where everything I care about meets: software that has to work, has to be secure, and has to hold up when an auditor starts asking questions.' },
+      { text: 'One rule for this report: ==no number I can’t back up==. Each one has a footnote, and the auditor’s report at the end invites you to try to break the site yourself.' },
     ],
     sign: ['Sergio Andrés González Mateus', 'Founder, CEO and sole employee', 'Bogotá, 2,640 m above sea level'],
+    ps: 'P.S. Under ultraviolet light the cover says more. Try it.',
+    pull: 'No number I can’t back up.',
+    letterhead: ['From the desk of the CEO', 'Sergio González, Inc.', 'Bogotá, Colombia', 'Re: Annual Report 2026'],
+    sigLabel: 'Signature of Sergio González',
   },
   es: {
     kicker: 'Sección i',
     title: 'Carta a los accionistas',
     salutation: 'Señores accionistas:',
     body: [
-      { text: 'Esta empresa tiene un producto, un empleado y un promedio de 4,21 sobre 5.[n:EDU] El empleado soy yo. Este informe cuenta lo que he construido hasta ahora, lo que podría construir para ustedes y, en los factores de riesgo, lo que todavía no sé hacer.' },
+      { text: 'Esta empresa tiene ==un producto, un empleado== y un promedio de 4,21 sobre 5.[n:EDU] El empleado soy yo. Este informe cuenta lo que he construido hasta ahora, lo que podría construir para ustedes y, en los factores de riesgo, lo que todavía no sé hacer.' },
       { jnj: true, text: 'Este año empecé a trabajar en serio. Como practicante de Health Care Compliance en Johnson & Johnson Innovative Medicine automaticé cerca de 900 actualizaciones de perfiles de profesionales de la salud, y los 70 colegas que antes las hacían a mano ahora gastan entre 92 y 97 por ciento menos tiempo en cada una.[n:EXP-JNJ] También ayudé a construir tres agentes de IA y mejoré una app de reporte de desviaciones que se usa en toda Latinoamérica.' },
-      { text: 'He estudiado en tres países: Colombia, España y Estados Unidos.[n:EDU] En el camino, siempre en equipos de tres, convertí más de un millón de registros de nacimientos del DANE en un data warehouse para entender por qué algunos bebés en Colombia nacen con bajo peso,[n:PRJ-NEO] y entrené un modelo que pone las opiniones ciudadanas en el tema correcto 97 de cada 100 veces.[n:PRJ-OPI]' },
-      { text: 'Mi proyecto de grado, un sistema de evidencia forense para la banca colombiana, es donde se junta todo lo que me importa: software que tiene que funcionar, tiene que ser seguro y tiene que aguantar cuando un auditor empieza a hacer preguntas.' },
-      { text: 'Una regla para este informe: ninguna cifra que no pueda respaldar. Cada una tiene su nota al pie, y el informe del auditor, al final, los invita a intentar romper el sitio ustedes mismos.' },
+      { text: 'He estudiado en tres países: Colombia, España y Estados Unidos.[n:EDU] En el camino, siempre en equipos de tres, convertí más de un millón de registros de nacimientos del DANE en un data warehouse para entender por qué algunos bebés en Colombia nacen con bajo peso,[n:PRJ-NEO] y entrené un modelo que pone las opiniones ciudadanas en el tema correcto ==97 de cada 100 veces==.[n:PRJ-OPI]' },
+      { text: 'Mi proyecto de grado, ==un sistema de evidencia forense== para la banca colombiana, es donde se junta todo lo que me importa: software que tiene que funcionar, tiene que ser seguro y tiene que aguantar cuando un auditor empieza a hacer preguntas.' },
+      { text: 'Una regla para este informe: ==ninguna cifra sin respaldo==. Cada una tiene su nota al pie, y el informe del auditor, al final, los invita a intentar romper el sitio ustedes mismos.' },
     ],
     sign: ['Sergio Andrés González Mateus', 'Fundador, CEO y único empleado', 'Bogotá, a 2.640 m sobre el nivel del mar'],
+    ps: 'P.D. Bajo luz ultravioleta, la portada dice más. Pruébenlo.',
+    pull: 'Ninguna cifra sin respaldo.',
+    letterhead: ['Del escritorio del CEO', 'Sergio González, Inc.', 'Bogotá, Colombia', 'Ref.: Informe Anual 2026'],
+    sigLabel: 'Firma de Sergio González',
   },
 };
 
