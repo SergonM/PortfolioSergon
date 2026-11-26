@@ -27,8 +27,11 @@ jobs:
       - uses: actions/checkout@v4
         if: env.HAS_TOKEN == 'true'
       - uses: cloudflare/wrangler-action@v3
+        id: deploy
         if: env.HAS_TOKEN == 'true'
         with:
+          # Wrangler 3 ignores the [[ratelimits]] binding, so pin 4.
+          wranglerVersion: '4.168.0'
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: worker
@@ -36,3 +39,15 @@ jobs:
             GEMINI_API_KEY
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      - name: Smoke test the live analyst
+        if: env.HAS_TOKEN == 'true'
+        env:
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          set -euo pipefail
+          echo "Worker: $URL"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Origin: https://evil.example' -H 'content-type: application/json' -d '{"history":[{"role":"user","text":"hi"}]}' "$URL")
+          echo "Foreign origin -> $code (want 403)"; test "$code" = 403
+          out=$(curl -s -w '\n%{http_code}' -X POST -H 'Origin: https://sergonm.github.io' -H 'content-type: application/json' \
+            -d '{"history":[{"role":"user","text":"In one sentence, what has he built with AI?"}]}' "$URL")
+          echo "$out"; test "$(echo "$out" | tail -n1)" = 200
