@@ -8,13 +8,23 @@ import '../styles/global.css';
 import RunningHead from '../components/chrome/RunningHead.astro';
 import { strings, type Locale } from '../i18n/strings';
 
-interface Props { locale: Locale }
-const { locale } = Astro.props;
+interface Props {
+  locale: Locale;
+  /** Path of this page below the edition root, e.g. 'investigation/'. Empty for the report itself. */
+  slug?: string;
+  title?: string;
+  description?: string;
+  /** Running-head sections on this page (ids from i18n/chrome). Defaults to every section. */
+  entries?: string[];
+}
+const { locale, slug = '', entries } = Astro.props;
 const t = strings[locale];
+const pageTitle = Astro.props.title ?? t.htmlTitle;
+const pageDescription = Astro.props.description ?? t.description;
 const base = import.meta.env.BASE_URL;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const enUrl = new URL(base, Astro.site);
-const esUrl = new URL(`${base}es/`, Astro.site);
+const enUrl = new URL(`${base}${slug}`, Astro.site);
+const esUrl = new URL(`${base}es/${slug}`, Astro.site);
 const ogImage = new URL(`${base}og/cover-${locale}.jpg`, Astro.site);
 const ogAlt = locale === 'en'
   ? 'Cover of “Sergio González, Inc. — Annual Report 2026”: a security-printed report on a dark desk, with a red Audited seal.'
@@ -25,7 +35,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ProfilePage',
   url: canonical.href,
-  name: t.htmlTitle,
+  name: pageTitle,
   inLanguage: locale === 'en' ? 'en' : 'es-CO',
   image: ogImage.href,
   mainEntity: {
@@ -49,8 +59,8 @@ const jsonLd = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>{t.htmlTitle}</title>
-    <meta name="description" content={t.description} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
     <meta name="author" content="Sergio Andrés González Mateus" />
     <meta name="theme-color" content="#0f1a14" />
     <meta name="color-scheme" content="light" />
@@ -65,8 +75,8 @@ const jsonLd = {
     <link rel="apple-touch-icon" href={`${base}apple-touch-icon.png`} />
     <meta property="og:type" content="profile" />
     <meta property="og:site_name" content={t.company} />
-    <meta property="og:title" content={t.htmlTitle} />
-    <meta property="og:description" content={t.description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={locale === 'en' ? 'en_US' : 'es_CO'} />
     <meta property="og:locale:alternate" content={locale === 'en' ? 'es_CO' : 'en_US'} />
@@ -78,8 +88,8 @@ const jsonLd = {
     <meta property="profile:first_name" content="Sergio" />
     <meta property="profile:last_name" content="González Mateus" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={t.htmlTitle} />
-    <meta name="twitter:description" content={t.description} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={ogAlt} />
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
@@ -96,7 +106,7 @@ const jsonLd = {
   </head>
   <body id="top">
     <a class="skip" href="#main">{t.skip}</a>
-    <RunningHead locale={locale} />
+    <RunningHead locale={locale} entries={entries} slug={slug} />
     <slot />
     <script>
       import '../scripts/main.ts';

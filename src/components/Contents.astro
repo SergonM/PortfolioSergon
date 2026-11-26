@@ -1,39 +1,77 @@
 ---
+/**
+ * Contents with a reader's guide on top: three ways through the report by time available,
+ * then the full list with a reading time per section. Only sections on the page are linked.
+ */
 import { strings, type Locale } from '../i18n/strings';
-interface Props { locale: Locale }
-const { locale } = Astro.props;
+import { kpis } from '../data/report';
+import { JNJ_PUBLIC } from '../data/disclosure';
+import { cvHref } from '../data/contact';
+
+interface Props { locale: Locale; present: string[] }
+const { locale, present } = Astro.props;
 const t = strings[locale];
 const roman = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
-const anchors: (string | null)[] = ['letter', 'highlights', 'segments', 'investigation', null, null, null];
+const ids = ['letter', 'highlights', 'segments', 'investigation', 'risk-factors', 'auditor', 'investor-relations'];
+const nKpi = String(kpis.filter((k) => JNJ_PUBLIC || !k.jnj).length);
+const rows = t.sections.map((name, i) => ({ name, folio: roman[i], id: ids[i], time: t.readTime[i] })).filter((r) => present.includes(r.id));
 ---
 <nav id="contents" class="wrap toc" aria-labelledby="toc-title">
-  <h2 id="toc-title">{t.contents}</h2>
-  <p class="notice">{t.notice}</p>
-  <ol>
-    {t.sections.map((s, i) => (
-      <li data-reveal>
-        <span class="folio">{roman[i]}</span>
-        {anchors[i]
-          ? <a class="name" href={`#${anchors[i]}`}>{s}</a>
-          : <span class="name">{s}</span>}
-        <span class:list={['status', 'label', { live: anchors[i] }]}>{anchors[i] ? t.published : t.inPrep}</span>
-      </li>
-    ))}
-  </ol>
+  <div class="guide">
+    <p class="label kicker">{t.guideKicker}</p>
+    <h2 id="toc-title" data-typeset>{t.guideTitle}</h2>
+    <ol class="lanes">
+      {t.guide.map((g, i) => (
+        <li data-reveal>
+          <span class="time">{g.t}</span>
+          <span class="d">{g.d.replace('{n}', nKpi)}</span>
+          {g.href === 'cv'
+            ? <span class="acts"><a class="act primary" href={cvHref(locale)} download>{g.cta} ↓</a><a class="act" href="#investor-relations">{t.contactLink}</a></span>
+            : <span class="acts"><a class="act" href={g.href}>{g.cta} →</a></span>}
+        </li>
+      ))}
+    </ol>
+  </div>
+
+  <div class="list">
+    <p class="label lh">{t.contents}</p>
+    <ol>
+      {rows.map((r) => (
+        <li>
+          <span class="folio">{r.folio}</span>
+          <a class="name" href={`#${r.id}`}>{r.name}</a>
+          <span class="label rt">{r.time}</span>
+        </li>
+      ))}
+    </ol>
+  </div>
 </nav>
 
 <style>
-  .toc { padding-block: 4rem 3rem; display: grid; gap: 1rem; }
+  .toc { padding-block: clamp(3.5rem, 8vw, 6rem) clamp(3rem, 6vw, 4.5rem); display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 2.5rem clamp(2rem, 6vw, 5rem); align-items: start; }
+  .kicker { margin: 0 0 .8rem; color: var(--seal); }
   h2 { font-size: var(--step-3); }
-  .notice { margin: 0; max-width: var(--measure); color: var(--ink-soft); }
-  ol { list-style: none; margin: 1.5rem 0 0; padding: 0; border-top: 1px solid var(--rule); }
-  li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: 1rem; align-items: baseline;
-       padding-block: 0.9rem; border-bottom: 1px solid var(--rule); }
+  .lanes { list-style: none; margin: 1.75rem 0 0; padding: 0; border-top: 2px solid var(--ink); }
+  .lanes li { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: .5rem 1.25rem; align-items: baseline; padding-block: 1.1rem; border-bottom: 1px solid var(--rule); }
+  .time { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.1; color: var(--seal); }
+  .d { color: var(--ink); }
+  .acts { grid-column: 2; display: flex; flex-wrap: wrap; gap: .6rem; }
+  .act { font-size: var(--step--1); letter-spacing: .12em; text-transform: uppercase; text-decoration: none; padding: .55rem .8rem; border: 1px solid var(--ink); line-height: 1; }
+  .act:hover { background: var(--ink); color: var(--paper); }
+  .act.primary { background: var(--seal); border-color: var(--seal); color: #f4f3ec; }
+  .act.primary:hover { background: var(--ink); border-color: var(--ink); color: #f4f3ec; }
+  .lh { margin: 0 0 .6rem; color: var(--ink-soft); }
+  .list ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+  .list li { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: .8rem; align-items: baseline; padding-block: .7rem; border-bottom: 1px solid var(--rule); }
   .folio { color: var(--seal); font-variant-numeric: tabular-nums; }
-  .name { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.2; min-width: 0; }
-  a.name { text-decoration: none; }
-  a.name:hover { text-decoration: underline; }
-  .status { color: var(--ink-soft); }
-  .status.live { color: var(--seal); }
-  @media (max-width: 560px) { li { grid-template-columns: 2.2rem minmax(0, 1fr); } .status { grid-column: 2; } }
+  .name { font-family: var(--font-display); font-size: 1.1rem; line-height: 1.25; text-decoration: none; min-width: 0; }
+  .name:hover { text-decoration: underline; }
+  .rt { color: var(--ink-soft); white-space: nowrap; }
+  @media (max-width: 860px) {
+    .toc { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .lanes li { grid-template-columns: minmax(0, 1fr); }
+    .acts { grid-column: 1; }
+  }
 </style>

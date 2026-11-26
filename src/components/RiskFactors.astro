@@ -1,0 +1,65 @@
+---
+/**
+ * Section v: risk factors. Set like the risk section of a 10-K: numbered, sober, every risk
+ * followed by what is already being done about it. Readable without JS; motion only reveals.
+ */
+import { risks } from '../data/risks';
+import type { Locale } from '../i18n/strings';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const R = risks[locale];
+---
+<section id="risk-factors" class="risk" aria-labelledby="risk-title">
+  <div class="wrap grid">
+    <header class="head">
+      <p class="label kicker">{R.kicker}</p>
+      <h2 id="risk-title" data-typeset>{R.title}</h2>
+      <p class="lede">{R.lede}</p>
+    </header>
+
+    <ol class="list">
+      {R.items.map((r, i) => (
+        <li data-reveal>
+          <span class="no" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <div class="body">
+            <h3>{r.title}</h3>
+            <p class="txt">{r.body}</p>
+            <p class="mit">
+              <span class="label tag">{R.mit}</span>
+              <span>{r.mitigation}{r.link && <> <a href={r.link.href} rel="me">{r.link.text}</a></>}</span>
+            </p>
+          </div>
+        </li>
+      ))}
+    </ol>
+
+    <p class="closing label">{R.closing}</p>
+  </div>
+</section>
+
+<style>
+  .risk { padding-block: clamp(4rem, 9vw, 7rem); border-top: 1px solid var(--rule); }
+  .grid { display: grid; grid-template-columns: minmax(0, 20rem) minmax(0, 1fr); gap: 2rem clamp(2rem, 6vw, 5rem); align-items: start; }
+  .head { position: sticky; top: 72px; display: grid; gap: 1rem; }
+  .kicker { color: var(--seal); margin: 0; }
+  h2 { font-size: var(--step-3); }
+  .lede { margin: 0; color: var(--ink-soft); }
+  .list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); counter-reset: r; }
+  .list li { display: grid; grid-template-columns: 3.2rem minmax(0, 1fr); gap: 1rem; padding-block: 1.5rem; border-bottom: 1px solid var(--rule); }
+  .no { font-family: var(--font-display); font-size: 1.6rem; line-height: 1; color: var(--seal); font-variant-numeric: tabular-nums; }
+  .body { display: grid; gap: .6rem; }
+  h3 { font-size: var(--step-1); line-height: 1.15; }
+  .txt { margin: 0; color: var(--ink-soft); max-width: var(--measure); }
+  .mit { margin: 0; font-size: .92em; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .25rem .9rem; align-items: baseline; padding-top: .6rem; border-top: 1px dashed var(--rule); max-width: var(--measure); }
+  .tag { color: var(--seal); }
+  .mit a { overflow-wrap: anywhere; }
+  .closing { grid-column: 2; margin: 0; color: var(--ink-soft); letter-spacing: .08em; }
+  @media (max-width: 820px) {
+    .grid { grid-template-columns: minmax(0, 1fr); }
+    .head { position: static; }
+    .closing { grid-column: 1; }
+    .list li { grid-template-columns: 2.4rem minmax(0, 1fr); }
+    .mit { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

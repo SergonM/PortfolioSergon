@@ -3,6 +3,7 @@ import { rosette } from '../lib/guilloche';
 import { hero, memo } from '../data/hero';
 import { JNJ_PUBLIC } from '../data/disclosure';
 import type { Locale } from '../i18n/strings';
+import { cvHref, contact } from '../data/contact';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -32,7 +33,8 @@ const redactedCount = lines.flat().filter((p) => p.redacted).length;
     <div class="desk-bar label">
       <span class="tick"><b>SGM</b> {h.deskLabel.split(' · ')[1]}</span>
       <p class="seek">{h.seeking} {h.roles.map((r, i) => <><em>{r}</em>{i < h.roles.length - 1 && <span class="sep" aria-hidden="true"> · </span>}</>)}</p>
-      <a class="lang" href={otherHref} hreflang={locale === 'en' ? 'es' : 'en'} lang={locale === 'en' ? 'es' : 'en'}>{locale === 'en' ? 'Español' : 'English'}</a>
+      <span class="bar-acts"><a class="cvl" href={cvHref(locale)} download>{h.cvShort} <span aria-hidden="true">↓</span></a>
+      <a class="lang" href={otherHref} hreflang={locale === 'en' ? 'es' : 'en'} lang={locale === 'en' ? 'es' : 'en'}>{locale === 'en' ? 'Español' : 'English'}</a></span>
     </div>
 
     <div class="desk-grid">
@@ -100,7 +102,8 @@ const redactedCount = lines.flat().filter((p) => p.redacted).length;
         </div>
         <p class="next-row">
           <a class="next" href="#letter" data-next>{h.nextLetter} <span aria-hidden="true">↓</span></a>
-          <a class="next" href="https://www.linkedin.com/in/sergonm/" rel="me">{h.contactCta} <span aria-hidden="true">↗</span></a>
+          <a class="next" href={cvHref(locale)} download>{h.cvCta} <span aria-hidden="true">↓</span></a>
+          <a class="next" href={contact.linkedin} rel="me">{h.contactCta} <span aria-hidden="true">↗</span></a>
         </p>
       </article>
       </div>
@@ -132,6 +135,9 @@ const redactedCount = lines.flat().filter((p) => p.redacted).length;
   .seek em { font-style: normal; color: var(--on-desk); }
   .desk-bar a { color: var(--on-desk); }
   .desk-bar a:hover { color: var(--uv-y); }
+  .bar-acts { display: inline-flex; gap: 1.25rem; align-items: baseline; }
+  .desk-bar .cvl { color: var(--desk); background: var(--on-desk); padding: .15em .5em; text-decoration: none; }
+  .desk-bar .cvl:hover { color: var(--desk); background: var(--uv-y); }
   @media (max-width: 860px) {
     .desk-bar { grid-template-columns: minmax(0, 1fr) auto; }
     .seek { grid-column: 1 / -1; grid-row: 2; justify-self: start; text-align: left; }
