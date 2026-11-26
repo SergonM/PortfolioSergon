@@ -3,41 +3,37 @@ import { strings, type Locale } from '../i18n/strings';
 interface Props { locale: Locale }
 const { locale } = Astro.props;
 const t = strings[locale];
-const base = import.meta.env.BASE_URL;
-const other = locale === 'en' ? `${base}es/` : base;
 const roman = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii'];
+const anchors: (string | null)[] = ['letter', 'highlights', null, null, null, null, null];
 ---
-<main id="contents" class="wrap">
-  <section aria-labelledby="toc-title" class="toc">
-    <h2 id="toc-title">{t.contents}</h2>
-    <p class="notice">{t.notice}</p>
-    <ol>
-      {t.sections.map((s, i) => (
-        <li><span class="folio">{roman[i]}</span><span class="name">{s}</span><span class="status label">{t.inPrep}</span></li>
-      ))}
-    </ol>
-  </section>
-  <footer class="foot label">
-    <span>{t.reportedFrom}</span>
-    <span class="links">
-      <a href="https://www.linkedin.com/in/sergonm/" rel="me">LinkedIn</a>
-      <a href="https://github.com/SergonM" rel="me">GitHub</a>
-      <a href={other} hreflang={locale === 'en' ? 'es' : 'en'} lang={locale === 'en' ? 'es' : 'en'}>{t.switchLabel}</a>
-    </span>
-  </footer>
-</main>
+<nav id="contents" class="wrap toc" aria-labelledby="toc-title">
+  <h2 id="toc-title">{t.contents}</h2>
+  <p class="notice">{t.notice}</p>
+  <ol>
+    {t.sections.map((s, i) => (
+      <li data-reveal>
+        <span class="folio">{roman[i]}</span>
+        {anchors[i]
+          ? <a class="name" href={`#${anchors[i]}`}>{s}</a>
+          : <span class="name">{s}</span>}
+        <span class:list={['status', 'label', { live: anchors[i] }]}>{anchors[i] ? t.published : t.inPrep}</span>
+      </li>
+    ))}
+  </ol>
+</nav>
 
 <style>
-  .toc { padding-block: 4rem 3rem; display: grid; gap: 1rem; border-top: 1px solid var(--rule); }
+  .toc { padding-block: 4rem 3rem; display: grid; gap: 1rem; }
   h2 { font-size: var(--step-3); }
   .notice { margin: 0; max-width: var(--measure); color: var(--ink-soft); }
-  ol { list-style: none; margin: 1.5rem 0 0; padding: 0; }
+  ol { list-style: none; margin: 1.5rem 0 0; padding: 0; border-top: 1px solid var(--rule); }
   li { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; gap: 1rem; align-items: baseline;
        padding-block: 0.9rem; border-bottom: 1px solid var(--rule); }
   .folio { color: var(--seal); font-variant-numeric: tabular-nums; }
   .name { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.2; min-width: 0; }
-  .status { color: var(--ochre); }
+  a.name { text-decoration: none; }
+  a.name:hover { text-decoration: underline; }
+  .status { color: var(--ink-soft); }
+  .status.live { color: var(--seal); }
   @media (max-width: 560px) { li { grid-template-columns: 2.2rem minmax(0, 1fr); } .status { grid-column: 2; } }
-  .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; padding-block: 2rem 3rem; color: var(--ink-soft); }
-  .links { display: flex; flex-wrap: wrap; gap: 1.25rem; }
 </style>

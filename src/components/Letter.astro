@@ -1,0 +1,70 @@
+---
+import { letter, sourceNames } from '../data/report';
+import { JNJ_PUBLIC } from '../data/disclosure';
+import { footnoter } from '../lib/footnotes';
+import { strings, type Locale } from '../i18n/strings';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = strings[locale];
+const L = letter[locale];
+const fn = footnoter();
+const paragraphs = L.body.filter((p) => JNJ_PUBLIC || !p.jnj).map((p) => fn.parse(p.text));
+const notes = fn.notes;
+---
+<section id="letter" class="wrap letter" aria-labelledby="letter-title">
+  <header class="head">
+    <p class="label kicker">{L.kicker}</p>
+    <h2 id="letter-title" data-typeset>{L.title}</h2>
+  </header>
+
+  <div class="body">
+    <p class="salutation" data-reveal>{L.salutation}</p>
+    {paragraphs.map((segs, i) => (
+      <p data-reveal class:list={{ lead: i === 0 }}>
+        {segs.map((s) => s.kind === 'text'
+          ? s.text
+          : <sup><a href={`#letter-n${s.n}`} id={`letter-r${s.n}-${i}`} aria-label={`${t.notesTitle} ${s.n}`}>{s.n}</a></sup>)}
+      </p>
+    ))}
+    <p class="sign" data-reveal>
+      <span class="sig">{L.sign[0]}</span>
+      {L.sign.slice(1).map((l) => <span class="label">{l}</span>)}
+    </p>
+  </div>
+
+  <aside class="notes" aria-label={t.notesTitle}>
+    <p class="label">{t.notesTitle}</p>
+    <ol>
+      {notes.map((n) => <li id={`letter-n${n.n}`}><span class="n">{n.n}</span><span>{sourceNames[locale][n.id]} <span class="src">[{n.id}]</span></span></li>)}
+    </ol>
+  </aside>
+</section>
+
+<style>
+  .letter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 5rem 4rem; border-top: 1px solid var(--rule); }
+  @media (min-width: 900px) {
+    .letter { grid-template-columns: minmax(0, 3fr) minmax(0, 7fr) minmax(0, 3fr); column-gap: 3rem; }
+    .head { grid-column: 1 / -1; }
+    .body { grid-column: 2; }
+    .notes { grid-column: 3; align-self: end; }
+  }
+  .kicker { color: var(--seal); margin: 0 0 0.75rem; }
+  h2 { font-size: var(--step-5); }
+  .body { display: grid; gap: 1.1rem; max-width: var(--measure); }
+  .body p { margin: 0; }
+  .salutation { font-family: var(--font-display); font-size: var(--step-1); }
+  .lead::first-letter { font-family: var(--font-display); float: left; font-size: 3.6em; line-height: 0.85; padding: 0.06em 0.12em 0 0; color: var(--ink); }
+  sup { font-size: 0.7em; line-height: 0; }
+  sup a { color: var(--seal); text-decoration: none; padding-inline: 0.1em; }
+  .sign { display: grid; gap: 0.2rem; margin-top: 1.5rem !important; }
+  .sig { font-family: var(--font-display); font-size: var(--step-1); }
+  .sign .label { color: var(--ink-soft); }
+  .notes { font-size: var(--step--1); color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 0.75rem; }
+  .notes .label { margin: 0 0 0.5rem; }
+  .notes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+  .notes li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); }
+  .notes .n { color: var(--seal); }
+  .notes li:target { color: var(--ink); }
+  .src { white-space: nowrap; }
+</style>

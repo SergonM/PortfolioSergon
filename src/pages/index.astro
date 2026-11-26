@@ -1,9 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
-import Cover from '../components/Cover.astro';
+import Hero from '../components/Hero.astro';
 import Contents from '../components/Contents.astro';
+import Letter from '../components/Letter.astro';
+import Highlights from '../components/Highlights.astro';
+import Footer from '../components/Footer.astro';
 ---
 <Base locale="en">
-  <Cover locale="en" />
-  <Contents locale="en" />
+  <Hero locale="en" />
+  <main id="main">
+    <Contents locale="en" />
+    <Letter locale="en" />
+    <Highlights locale="en" />
+  </main>
+  <Footer locale="en" />
 </Base>
