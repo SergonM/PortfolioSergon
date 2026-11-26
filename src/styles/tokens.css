@@ -1,0 +1,26 @@
+/* Direction B — "Serie 0001": security-print paper, ink green, seal red, ochre.
+   Interior pages stay Swiss and quiet; guilloché lives only on covers and dividers. */
+:root {
+  --paper: #ecebe3;
+  --paper-2: #e3e1d6;
+  --ink: #173326;
+  --ink-soft: #3e5649;
+  --seal: #a3261f;
+  --ochre: #8a6720; /* text-safe ochre (AA on paper) */
+  --ochre-line: #b0852b; /* decorative strokes only */
+  --rule: rgb(23 51 38 / 0.28);
+
+  --font-display: 'Gloock', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --step--1: clamp(0.78rem, 0.76rem + 0.1vw, 0.84rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --step-3: clamp(2rem, 1.6rem + 2vw, 3.2rem);
+  --step-5: clamp(2.8rem, 2rem + 4.5vw, 5.6rem);
+
+  --gutter: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  --measure: 64ch;
+  color-scheme: light;
+}
