@@ -1,0 +1,201 @@
+---
+/**
+ * The report's running head: what a printed annual report carries at the top of every page.
+ * Left: the section you are in. Right: a numbering-machine folio and the index.
+ * Without JS it is not rendered at all (html.js gates it); the Contents section is the index then.
+ */
+import { chrome, chromeEntries } from '../../i18n/chrome';
+import type { Locale } from '../../i18n/strings';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const c = chrome[locale];
+const base = import.meta.env.BASE_URL;
+const otherHref = locale === 'en' ? `${base}es/` : base;
+const otherLocale = locale === 'en' ? 'es' : 'en';
+const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const wheel = (cls: string) => (
+  `<span class="wheel ${cls}" aria-hidden="true"><span class="strip">${digits.map((d) => `<span>${d}</span>`).join('')}</span></span>`
+);
+---
+<div class="rh-progress" data-rh-progress aria-hidden="true"><span></span></div>
+
+<header class="rh" data-rh data-locale={locale} aria-label={c.head}>
+  <div class="rh-in">
+    <p class="rh-co"><span class="full">{c.head}</span><span class="short">{c.headShort}</span></p>
+    <p class="rh-sec" aria-live="polite"><span class="rh-folio" data-rh-folio>·</span><span class="rh-name" data-rh-name>{chromeEntries[0].short[locale]}</span></p>
+    <p class="rh-page" data-rh-page title="">
+      <span class="lbl">{c.page}</span>
+      <span class="num"><Fragment set:html={wheel('t')} /><Fragment set:html={wheel('u')} /></span>
+      <span class="of">/ <span data-rh-total>00</span></span>
+      <span class="sr" data-rh-sr></span>
+    </p>
+    <a class="rh-index" href="#contents" data-rh-open aria-controls="rh-index">
+      <span class="glyph" aria-hidden="true"><i></i><i></i><i></i></span>{c.index}
+    </a>
+  </div>
+</header>
+
+<dialog id="rh-index" class="ix" aria-labelledby="ix-title" data-rh-dialog data-no-chrome>
+  <div class="ix-sheet" data-ix-sheet>
+    <div class="ix-top label">
+      <span>{c.head}</span>
+      <button type="button" class="ix-close" data-ix-close>{c.close}<span aria-hidden="true"> ×</span></button>
+    </div>
+    <div class="ix-head">
+      <h2 id="ix-title">{c.indexTitle}</h2>
+      <p class="ix-lede">{c.indexLede}</p>
+      <p class="ix-total label"><span>{c.readSoFar}</span> <b data-ix-total>0%</b></p>
+    </div>
+    <ol class="ix-list">
+      {chromeEntries.map((e, i) => (
+        <li class="ix-row" data-ix-row={e.id} style={`--i:${i}`}>
+          <a href={`#${e.id}`} data-ix-link={e.id}>
+            <span class="f">{e.folio}</span>
+            <span class="t">{e.title[locale]}</span>
+            <span class="lead" aria-hidden="true"></span>
+            <span class="pg" data-ix-page>–</span>
+            <span class="st label" data-ix-status>{c.unread}</span>
+            <span class="bar" aria-hidden="true"><span data-ix-bar></span></span>
+          </a>
+        </li>
+      ))}
+    </ol>
+    <div class="ix-foot label">
+      <a href="#top" data-ix-cover>↑ {c.cover}</a>
+      <a href={otherHref} hreflang={otherLocale} lang={otherLocale} data-ix-lang>{c.otherLang}</a>
+      <span class="kbd">{c.shortcut}</span>
+    </div>
+  </div>
+</dialog>
+
+<script type="application/json" id="rh-strings" set:html={JSON.stringify({ ...c, entries: chromeEntries.map((e) => ({ id: e.id, folio: e.folio, short: e.short[locale] })) })} />
+
+<style>
+  /* ---------- progress hairline ---------- */
+  .rh-progress { display: none; }
+  :global(html.js) .rh-progress { display: block; position: fixed; inset: 0 0 auto 0; height: 2px; z-index: 60; pointer-events: none; view-transition-name: rh-progress; }
+  .rh-progress span { position: absolute; inset: 0; background: var(--seal); transform: scaleX(0); transform-origin: 0 50%; will-change: transform; }
+
+  /* ---------- running head ---------- */
+  .rh { display: none; }
+  :global(html.js) .rh {
+    --rh-bg: var(--paper); --rh-fg: var(--ink); --rh-soft: var(--ink-soft); --rh-line: var(--rule);
+    display: block; position: fixed; inset: 0 0 auto 0; z-index: 50; color: var(--rh-fg);
+    transform: translate3d(0, -110%, 0); transition: transform .55s cubic-bezier(.2, .8, .2, 1);
+    view-transition-name: running-head;
+  }
+  :global(html.js) .rh.on { transform: none; }
+  .rh::before { content: ''; position: absolute; inset: 0; background: var(--rh-bg); border-bottom: 1px solid var(--rh-line); transition: opacity .3s; }
+  .rh[data-tone='dark'] { --rh-bg: #0f1a14; --rh-fg: #e9e8df; --rh-soft: #a9b7ad; --rh-line: rgb(233 232 223 / .18); }
+  .rh-in { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: clamp(.75rem, 2vw, 2rem);
+           height: 44px; padding-left: var(--gutter); padding-right: var(--gutter-r); font-size: var(--step--1); letter-spacing: .12em; text-transform: uppercase; }
+  .rh p { margin: 0; white-space: nowrap; }
+  .rh-co { color: var(--rh-soft); }
+  .rh-co .short { display: none; }
+  .rh-sec { display: flex; align-items: baseline; gap: .7rem; min-width: 0; overflow: hidden; }
+  .rh-folio { color: var(--seal); font-variant-numeric: tabular-nums; text-transform: none; letter-spacing: .04em; }
+  .rh[data-tone='dark'] .rh-folio { color: #e2614c; }
+  .rh-name { font-family: var(--font-display); font-size: 1.15rem; letter-spacing: 0; text-transform: none; overflow: hidden; text-overflow: ellipsis; display: inline-block; }
+  .rh-name.swap { animation: rh-swap .6s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes rh-swap { from { transform: translate3d(0, 110%, 0); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .rh-page { display: flex; align-items: baseline; gap: .35rem; font-variant-numeric: tabular-nums; }
+  .rh-page .lbl, .rh-page .of { color: var(--rh-soft); }
+  .num { display: inline-flex; font-size: 1.05rem; letter-spacing: 0; }
+  .num :global(.wheel) { display: inline-block; height: 1.2em; line-height: 1.2em; overflow: hidden; width: .62em; text-align: center; }
+  .num :global(.strip) { display: flex; flex-direction: column; transform: translate3d(0, calc(var(--d, 0) * -1.2em), 0); transition: transform .5s cubic-bezier(.3, 1.5, .5, 1); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+  .rh-index { display: inline-flex; align-items: center; gap: .55rem; text-decoration: none; padding: .45rem .7rem; border: 1px solid currentColor; line-height: 1; }
+  .rh-index:hover { background: var(--rh-fg); color: var(--rh-bg); }
+  .glyph { display: inline-grid; gap: 3px; width: 12px; }
+  .glyph i { display: block; height: 1px; background: currentColor; transform-origin: 0 50%; transition: transform .3s; }
+  .glyph i:nth-child(2) { transform: scaleX(.6); }
+  .rh-index:hover .glyph i { transform: scaleX(1); }
+
+  @media (max-width: 900px) { .rh-co .full { display: none; } .rh-co .short { display: inline; } }
+  @media (max-width: 560px) {
+    .rh-in { grid-template-columns: minmax(0, 1fr) auto auto; gap: .8rem; height: 42px; }
+    .rh-co { display: none; }
+    .rh-page .lbl { display: none; }
+    .rh-index { padding: .45rem .55rem; }
+  }
+
+  /* ---------- the index sheet ---------- */
+  .ix { padding: 0; margin: 0; border: 0; max-width: none; max-height: none; width: 100%; height: 100%; background: transparent; color: var(--ink); overflow: hidden; }
+  .ix::backdrop { background: rgb(10 18 14 / .72); }
+  .ix[open]::backdrop { animation: ix-dim .5s ease both; }
+  .ix.closing::backdrop { animation: ix-dim .35s ease reverse both; }
+  @keyframes ix-dim { from { opacity: 0; } }
+  .ix-sheet {
+    position: absolute; inset: clamp(0px, 2.4vw, 28px) clamp(0px, 3vw, 40px) 0; overflow: auto; overscroll-behavior: contain;
+    background-color: var(--paper); padding: clamp(1.25rem, 3vw, 2.75rem) clamp(1rem, 4vw, 4rem) 3rem;
+    box-shadow: 0 -30px 80px -20px rgb(0 0 0 / .6); transform-origin: 50% 100%;
+  }
+  .ix[open] .ix-sheet { animation: ix-in .8s cubic-bezier(.16, 1, .3, 1) both; }
+  .ix.closing .ix-sheet { animation: ix-out .4s cubic-bezier(.7, 0, .84, 0) both; }
+  @keyframes ix-in { from { transform: translate3d(0, 104%, 0) rotate(2.2deg); } }
+  @keyframes ix-out { to { transform: translate3d(0, 104%, 0) rotate(-1.4deg); } }
+  .ix-sheet::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.09 0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .ix-top { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 1rem; color: var(--ink-soft); padding-bottom: 1rem; border-bottom: 1px solid var(--ink); }
+  .ix-close { white-space: nowrap; font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 1px solid var(--ink); padding: .5rem .8rem; cursor: pointer; }
+  .ix-close:hover { background: var(--ink); color: var(--paper); }
+  .ix-head { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); gap: 1rem 3rem; align-items: end; padding-block: clamp(1.5rem, 4vw, 3rem) 1.5rem; }
+  .ix-head h2 { font-size: clamp(3.5rem, 2rem + 9vw, 10rem); line-height: .85; letter-spacing: -.02em; grid-row: span 2; }
+  .ix-lede { margin: 0; color: var(--ink-soft); max-width: 40ch; }
+  .ix-total { margin: 0; display: flex; gap: .8rem; align-items: baseline; color: var(--ink-soft); }
+  .ix-total b { font-weight: 400; color: var(--seal); font-size: 1.1rem; letter-spacing: .04em; }
+
+  .ix-list { position: relative; list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+  .ix-row a { position: relative; display: grid; grid-template-columns: 3.2rem minmax(0, auto) minmax(2rem, 1fr) 3rem 12rem; align-items: baseline; gap: .9rem;
+              padding-block: 1rem .9rem; text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .ix[open] .ix-row { animation: ix-row .7s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(.18s + var(--i) * 45ms); }
+  @keyframes ix-row { from { opacity: 0; transform: translate3d(0, 18px, 0); } }
+  .f { color: var(--seal); font-variant-numeric: tabular-nums; }
+  .t { font-family: var(--font-display); font-size: clamp(1.25rem, 1rem + 1.3vw, 2.1rem); line-height: 1.1; transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
+  .lead { align-self: end; margin-bottom: .45em; height: 2px; background-image: radial-gradient(circle, var(--ink-soft) 1px, transparent 1.2px); background-size: 7px 2px; background-repeat: repeat-x; opacity: .7; }
+  .pg { text-align: right; font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+  .st { text-align: right; color: var(--ink-soft); }
+  .bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; overflow: hidden; }
+  .bar span { position: absolute; inset: 0; background: var(--ink); transform: scaleX(var(--p, 0)); transform-origin: 0 50%; transition: transform .9s cubic-bezier(.16, 1, .3, 1) .3s; }
+  .ix-row a:hover .t, .ix-row a:focus-visible .t { transform: translate3d(.6rem, 0, 0); }
+  .ix-row a:hover { color: var(--ink); }
+  .ix-row a:focus-visible { outline-offset: -2px; }
+  .ix-row[data-state='here'] .st { color: var(--seal); }
+  .ix-row[data-state='here'] .bar span { background: var(--seal); }
+  .ix-row[data-state='read'] .st { color: #2f6b3a; }
+  .ix-row[data-state='printer'] a { pointer-events: none; }
+  .ix-row[data-state='printer'] .t, .ix-row[data-state='printer'] .pg { color: var(--ink-soft); }
+  .ix-row[data-state='printer'] .t { font-style: italic; }
+  .ix-row[data-state='printer'] .lead { opacity: .25; }
+
+  .ix-foot { position: relative; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; padding-top: 1.75rem; color: var(--ink-soft); }
+  .ix-foot a { color: var(--ink); }
+  .kbd { flex-basis: 100%; }
+  @media (hover: none) { .kbd { display: none; } }
+
+  @media (max-width: 720px) {
+    .ix-sheet { inset: 0; padding-top: 1rem; }
+    .ix-head { grid-template-columns: 1fr; }
+    .ix-head h2 { grid-row: auto; }
+    .ix-row a { grid-template-columns: 2.4rem minmax(0, 1fr) auto; row-gap: .25rem; }
+    .lead { display: none; }
+    .st { grid-column: 2; text-align: left; grid-row: 2; }
+    .pg { grid-column: 3; grid-row: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ix[open] .ix-sheet, .ix[open] .ix-row, .ix.closing .ix-sheet, .ix[open]::backdrop { animation: none; }
+  }
+</style>
+
+<script>
+  import { initChrome } from '../../scripts/chrome/chrome';
+  // The running head only appears after the cover, so it waits for the page to finish loading
+  // and for an idle moment: it never competes with the cover's first paint.
+  const idle = (fn: () => void) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 1500 }) : setTimeout(fn, 200));
+  if (document.readyState === 'complete') idle(initChrome);
+  else addEventListener('load', () => idle(initChrome), { once: true });
+</script>
