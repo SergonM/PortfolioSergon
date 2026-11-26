@@ -11,3 +11,6 @@ ml/data/
 *.csv
 *.zip
 *.pbix
+
+# Cloudflare Worker local state
+worker/.wrangler/
