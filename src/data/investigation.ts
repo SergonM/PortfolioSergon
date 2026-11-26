@@ -67,7 +67,7 @@ export const steps: InvStep[] = [
   {
     state: 'z32',
     kicker: { en: '05 · Second test', es: '05 · Segunda prueba' },
-    title: { en: 'Where the mother lives mattered far more.', es: 'Dónde vive la madre pesó muchísimo más.' },
+    title: { en: 'City or countryside: the evidence was even clearer.', es: 'Ciudad o campo: la evidencia fue todavía más clara.' },
     body: {
       en: 'Comparing city and countryside, the result landed so far from chance that the curve had to shrink to fit it on the page. The probability that it was luck starts with 222 zeros after the decimal point.',
       es: 'Al comparar ciudad y campo, el resultado quedó tan lejos del azar que la curva tuvo que encogerse para que cupiera en la página. La probabilidad de que fuera suerte empieza con 222 ceros después de la coma.',

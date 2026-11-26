@@ -42,7 +42,7 @@ FEATURES = [
      'map': {1: 0, 2: 1, 3: 2, 4: 2, 5: 3},
      'labels': {'en': ['Contributory (employed)', 'Subsidised', 'Special regime', 'Uninsured'],
                 'es': ['Contributivo', 'Subsidiado', 'Régimen especial', 'Sin afiliación']}},
-    {'key': 'area', 'col': 'AREANAC', 'kind': 'nominal', 'map': {1: 0, 2: 1, 3: 2},
+    {'key': 'area', 'col': 'AREA_RES', 'kind': 'nominal', 'map': {1: 0, 2: 1, 3: 2},
      'labels': {'en': ['Town or city', 'Village', 'Rural'], 'es': ['Cabecera municipal', 'Centro poblado', 'Rural disperso']}},
     {'key': 'multiple', 'col': 'MUL_PARTO', 'kind': 'ordinal', 'map': {1: 0, 2: 1, 3: 1, 4: 1},
      'labels': {'en': ['One baby', 'Twins or more'], 'es': ['Un bebé', 'Gemelos o más']}},
@@ -99,6 +99,12 @@ def main(paths: list[str]) -> None:
     top, bottom = y_te[p_te >= q80].mean(), y_te[p_te <= q20].mean()
     print(f'held-out AUC {auc:.3f}; Brier {brier:.5f} vs {base_brier:.5f} for the base rate; top fifth {top:.4f} vs bottom fifth {bottom:.4f}')
 
+    imp: dict[str, float] = {}
+    for c, v in zip(names, tree.feature_importances_):
+        imp[c['feature']] = imp.get(c['feature'], 0.0) + float(v)
+    importance = sorted(({'feature': k, 'share': round(v, 3)} for k, v in imp.items()), key=lambda d: -d['share'])
+    print('importance:', importance)
+
     t = tree.tree_
     nodes = []
     for i in range(t.node_count):
@@ -120,7 +126,7 @@ def main(paths: list[str]) -> None:
         'metrics': {'auc': round(auc, 3), 'brier': round(brier, 5), 'brier_base': round(base_brier, 5),
                     'top_fifth_rate': round(float(top), 4), 'bottom_fifth_rate': round(float(bottom), 4)},
         'features': [{'key': f['key'], 'kind': f['kind'], 'labels': f['labels']} for f in FEATURES],
-        'columns': names, 'nodes': nodes,
+        'importance': importance, 'columns': names, 'nodes': nodes,
     }
     dest = Path(__file__).resolve().parents[1] / 'src' / 'data' / 'bpn-tree.json'
     dest.write_text(json.dumps(out, ensure_ascii=False, indent=1))

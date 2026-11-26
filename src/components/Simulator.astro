@@ -15,8 +15,9 @@ const T = {
     form: 'Birth certificate · simulation', of100: 'of every 100 babies', inGroup: 'born under 2,500 g in this group',
     national: 'Country average', path: 'What the tree looked at', births: 'births in this group',
     fields: { age: 'Mother’s age', edu: 'Mother’s schooling', visits: 'Prenatal check-ups', insurance: 'Health insurance', area: 'Where she lives', multiple: 'Babies', children: 'This child is her…' },
-    honest: (m: any) => `This describes groups, it doesn’t predict a person. Trained on ${m.births.toLocaleString('en-US')} DANE births from ${m.years.join(', ')}; on births it never saw, the tree ranks groups better than chance (AUC ${m.metrics.auc.toFixed(2)}, where 0.5 is a coin toss and 1 is perfect). Gestation weeks are left out on purpose: they explain most cases but nobody chooses them. Every group holds at least ${m.params.min_samples_leaf.toLocaleString('en-US')} births.`,
+    honest: (m: any) => `In the births it never saw, the riskiest fifth of groups had ${Math.round(m.metrics.top_fifth_rate * 100)} underweight babies per 100 and the safest fifth ${Math.round(m.metrics.bottom_fifth_rate * 100)}. This describes groups, it doesn’t predict a person. Trained on ${m.births.toLocaleString('en-US')} DANE births from ${m.years.join(', ')}; it ranks groups better than chance (AUC ${m.metrics.auc.toFixed(2)}, where 0.5 is a coin toss and 1 is perfect). Gestation weeks are left out on purpose: they explain most cases but nobody chooses them. Every group holds at least ${m.params.min_samples_leaf.toLocaleString('en-US')} births.`,
     reset: 'Reset',
+    drivers: 'What weighed most in the tree', small: 'Schooling and city vs countryside barely move it once the rest is known. The tests above prove those gaps exist; the tree shows they are small next to twins or missing check-ups.',
   },
   es: {
     kicker: 'Pruébalo tú', title: '¿Y si…?',
@@ -24,8 +25,9 @@ const T = {
     form: 'Certificado de nacido vivo · simulación', of100: 'de cada 100 bebés', inGroup: 'nacieron con menos de 2.500 g en este grupo',
     national: 'Promedio del país', path: 'Lo que miró el árbol', births: 'nacimientos en este grupo',
     fields: { age: 'Edad de la madre', edu: 'Estudios de la madre', visits: 'Controles prenatales', insurance: 'Afiliación a salud', area: 'Dónde vive', multiple: 'Bebés', children: 'Este hijo es su…' },
-    honest: (m: any) => `Esto describe grupos, no predice a una persona. Entrenado con ${m.births.toLocaleString('es-CO')} nacimientos del DANE de ${m.years.join(', ')}; con nacimientos que nunca vio, el árbol ordena los grupos mejor que el azar (AUC ${m.metrics.auc.toFixed(2).replace('.', ',')}, donde 0,5 es lanzar una moneda y 1 es perfecto). Las semanas de gestación quedan fuera a propósito: explican la mayoría de casos pero nadie las elige. Cada grupo tiene al menos ${m.params.min_samples_leaf.toLocaleString('es-CO')} nacimientos.`,
+    honest: (m: any) => `En los nacimientos que nunca vio, el quinto de grupos con más riesgo tuvo ${Math.round(m.metrics.top_fifth_rate * 100)} bebés con bajo peso por cada 100, y el de menos riesgo ${Math.round(m.metrics.bottom_fifth_rate * 100)}. Esto describe grupos, no predice a una persona. Entrenado con ${m.births.toLocaleString('es-CO')} nacimientos del DANE de ${m.years.join(', ')}; el árbol ordena los grupos mejor que el azar (AUC ${m.metrics.auc.toFixed(2).replace('.', ',')}, donde 0,5 es lanzar una moneda y 1 es perfecto). Las semanas de gestación quedan fuera a propósito: explican la mayoría de casos pero nadie las elige. Cada grupo tiene al menos ${m.params.min_samples_leaf.toLocaleString('es-CO')} nacimientos.`,
     reset: 'Reiniciar',
+    drivers: 'Lo que más pesó en el árbol', small: 'Los estudios y la zona casi no la mueven cuando ya se sabe lo demás. Las pruebas de arriba demuestran que esas diferencias existen; el árbol muestra que son pequeñas frente a un embarazo de gemelos o la falta de controles.',
   },
 }[locale];
 
@@ -72,6 +74,16 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
       </div>
     </div>
 
+    <div class="drivers">
+      <p class="label">{T.drivers}</p>
+      <ol>
+        {model.importance.filter((d: any) => d.share >= 0.01).map((d: any) => (
+          <li><span class="bar" style={`--w:${Math.max(4, Math.round(d.share * 100))}%`}></span><span class="nm">{(T.fields as any)[d.feature]}</span><span class="pc">{Math.round(d.share * 100)}%</span></li>
+        ))}
+      </ol>
+      <p class="small">{T.small}</p>
+    </div>
+
     <p class="honest">{T.honest(model)} <span class="label">[PRJ-NEO] · DANE</span></p>
   </div>
   <script type="application/json" data-sim-model set:html={payload} />
@@ -113,6 +125,16 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
   .path ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .3rem .5rem; align-items: center; }
   .path :global(li) { font-size: .86rem; border: 1px solid rgba(233, 232, 223, .3); padding: .25rem .55rem; }
   .path :global(li + li)::before { content: '→'; margin: 0 .5rem 0 -.25rem; color: var(--red); }
+  .drivers { display: grid; gap: .6rem; }
+  .drivers p { margin: 0; }
+  .drivers .label { color: var(--soft); }
+  .drivers ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; max-width: 640px; }
+  .drivers li { display: grid; grid-template-columns: 12rem minmax(0, 1fr) 3.5rem; align-items: center; gap: .8rem; font-size: .9rem; }
+  .drivers .bar { grid-column: 2; grid-row: 1; height: 10px; width: var(--w); background: var(--red); }
+  .drivers .nm { grid-column: 1; grid-row: 1; }
+  .drivers .pc { color: var(--soft); text-align: right; }
+  .drivers .small { color: #d4d8cf; max-width: 64ch; }
+  @media (max-width: 560px) { .drivers li { grid-template-columns: minmax(0, 1fr) 3rem; } .drivers .bar { grid-column: 1 / -1; grid-row: 2; } }
   .honest { font-size: var(--step--1); color: var(--soft); max-width: 90ch; margin: 0; border-top: 1px dashed rgba(233, 232, 223, .25); padding-top: 1rem; }
   .honest span { color: var(--fg); }
 
@@ -122,7 +144,7 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
   @media (min-width: 901px) {
     .peek { display: none; }
     .grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 3rem; }
-    .head, .honest { grid-column: 1 / -1; }
+    .head, .honest, .drivers { grid-column: 1 / -1; }
     .result { position: sticky; top: 2rem; }
   }
 </style>
