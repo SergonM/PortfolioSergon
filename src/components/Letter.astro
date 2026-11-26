@@ -1,7 +1,11 @@
 ---
+import '@fontsource/newsreader/latin-400.css';
+import '@fontsource/newsreader/latin-400-italic.css';
 import { letter, sourceNames } from '../data/report';
 import { JNJ_PUBLIC } from '../data/disclosure';
 import { footnoter } from '../lib/footnotes';
+import { rosette } from '../lib/guilloche';
+import { signature } from '../lib/signature';
 import { strings, type Locale } from '../i18n/strings';
 
 interface Props { locale: Locale }
@@ -9,62 +13,127 @@ const { locale } = Astro.props;
 const t = strings[locale];
 const L = letter[locale];
 const fn = footnoter();
-const paragraphs = L.body.filter((p) => JNJ_PUBLIC || !p.jnj).map((p) => fn.parse(p.text));
+
+/** Footnotes first, then ==highlighted== phrases inside the plain text pieces. */
+type Piece = { kind: 'text' | 'mark'; text: string } | { kind: 'note'; n: number };
+const paragraphs: Piece[][] = L.body.filter((p) => JNJ_PUBLIC || !p.jnj).map((p) =>
+  fn.parse(p.text).flatMap((s): Piece[] => s.kind === 'note'
+    ? [{ kind: 'note', n: s.n! }]
+    : s.text!.split(/(==.+?==)/).filter(Boolean).map((part) => part.startsWith('==')
+      ? { kind: 'mark', text: part.slice(2, -2) }
+      : { kind: 'text', text: part })));
 const notes = fn.notes;
+const seal = rosette(60, 17, 30, 17, 900);
 ---
-<section id="letter" class="wrap letter" aria-labelledby="letter-title">
-  <header class="head">
-    <p class="label kicker">{L.kicker}</p>
-    <h2 id="letter-title" data-typeset>{L.title}</h2>
-  </header>
+<section id="letter" class="letter" aria-labelledby="letter-title" data-letter>
+  <div class="wrap grid">
+    <header class="head">
+      <p class="label kicker">{L.kicker}</p>
+      <h2 id="letter-title" data-typeset>{L.title}</h2>
+    </header>
 
-  <div class="body">
-    <p class="salutation" data-reveal>{L.salutation}</p>
-    {paragraphs.map((segs, i) => (
-      <p data-reveal class:list={{ lead: i === 0 }}>
-        {segs.map((s) => s.kind === 'text'
-          ? s.text
-          : <sup><a href={`#letter-n${s.n}`} id={`letter-r${s.n}-${i}`} aria-label={`${t.notesTitle} ${s.n}`}>{s.n}</a></sup>)}
-      </p>
-    ))}
-    <p class="sign" data-reveal>
-      <span class="sig">{L.sign[0]}</span>
-      {L.sign.slice(1).map((l) => <span class="label">{l}</span>)}
-    </p>
+    <aside class="lh label" aria-label={L.letterhead[0]}>
+      <svg class="lh-seal" viewBox="-100 -100 200 200" aria-hidden="true" focusable="false"><path d={seal} /><circle r="30" /><text x="0" y="10" text-anchor="middle">SGM</text></svg>
+      {L.letterhead.map((l, i) => <span class:list={{ first: i === 0 }}>{l}</span>)}
+    </aside>
+
+    <div class="body">
+      <p class="salutation" data-reveal>{L.salutation}</p>
+      {paragraphs.map((segs, i) => (
+        <p data-reveal class:list={{ lead: i === 0 }}>
+          {segs.map((s) => s.kind === 'text'
+            ? s.text
+            : s.kind === 'mark'
+              ? <mark data-mark>{s.text}</mark>
+              : <sup><a href={`#letter-n${s.n}`} id={`letter-r${s.n}-${i}`} aria-label={`${t.notesTitle} ${s.n}`}>{s.n}</a></sup>)}
+        </p>
+      ))}
+
+      <div class="sign">
+        <svg class="sig" viewBox={signature.viewBox} role="img" aria-label={L.sigLabel} data-sig>
+          <defs><clipPath id="sig-pen"><rect x="-200" y="-1000" width="6800" height="1700" data-sig-reveal /></clipPath></defs>
+          <path d={signature.d} clip-path="url(#sig-pen)" />
+        </svg>
+        <span class="printed">{L.sign[0]}</span>
+        {L.sign.slice(1).map((l) => <span class="label">{l}</span>)}
+      </div>
+      <p class="ps" data-reveal>{L.ps}</p>
+    </div>
+
+    <aside class="side">
+      <p class="pull" aria-hidden="true" data-pull>{L.pull}</p>
+      <div class="notes" aria-label={t.notesTitle}>
+        <p class="label">{t.notesTitle}</p>
+        <ol>
+          {notes.map((n) => <li id={`letter-n${n.n}`}><span class="n">{n.n}</span><span>{sourceNames[locale][n.id]} <span class="src">[{n.id}]</span></span></li>)}
+        </ol>
+      </div>
+    </aside>
   </div>
-
-  <aside class="notes" aria-label={t.notesTitle}>
-    <p class="label">{t.notesTitle}</p>
-    <ol>
-      {notes.map((n) => <li id={`letter-n${n.n}`}><span class="n">{n.n}</span><span>{sourceNames[locale][n.id]} <span class="src">[{n.id}]</span></span></li>)}
-    </ol>
-  </aside>
 </section>
 
 <style>
-  .letter { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; padding-block: 5rem 4rem; border-top: 1px solid var(--rule); }
-  @media (min-width: 900px) {
-    .letter { grid-template-columns: minmax(0, 3fr) minmax(0, 7fr) minmax(0, 3fr); column-gap: 3rem; }
+  .letter { --font-text: 'Newsreader', 'Iowan Old Style', Georgia, serif; border-top: 1px solid var(--rule); padding-block: 5rem 5rem; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  @media (min-width: 960px) {
+    .grid { grid-template-columns: minmax(0, 2.6fr) minmax(0, 7fr) minmax(0, 3.2fr); column-gap: clamp(2rem, 3.5vw, 3.5rem); }
     .head { grid-column: 1 / -1; }
-    .body { grid-column: 2; }
-    .notes { grid-column: 3; align-self: end; }
+    .lh { grid-column: 1; grid-row: 2; align-self: start; position: sticky; top: 6rem; }
+    .body { grid-column: 2; grid-row: 2; }
+    .side { grid-column: 3; grid-row: 2; }
   }
-  .kicker { color: var(--seal); margin: 0 0 0.75rem; }
+  .kicker { color: var(--seal); margin: 0 0 .75rem; }
   h2 { font-size: var(--step-5); }
-  .body { display: grid; gap: 1.1rem; max-width: var(--measure); }
+
+  /* letterhead */
+  .lh { display: grid; gap: .3rem; color: var(--ink-soft); align-content: start; }
+  .lh .first { color: var(--seal); margin-bottom: .4rem; }
+  .lh-seal { width: 84px; height: 84px; margin-bottom: .9rem; }
+  .lh-seal path { fill: none; stroke: var(--ochre-line); stroke-width: .7; }
+  .lh-seal circle { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+  .lh-seal text { font-family: var(--font-display); font-size: 26px; fill: var(--ink); letter-spacing: 0; text-transform: none; }
+  @media (max-width: 959px) {
+    .lh { grid-template-columns: auto minmax(0, 1fr); column-gap: 1rem; border-block: 1px solid var(--rule); padding-block: .9rem; }
+    .lh-seal { grid-row: span 4; width: 64px; height: 64px; margin: 0; }
+  }
+
+  /* body: a proper reading face, set like a letter */
+  .body { display: grid; gap: 1.15rem; max-width: 36em; font-family: var(--font-text); font-size: clamp(1.12rem, 1.04rem + .35vw, 1.3rem); line-height: 1.55; }
   .body p { margin: 0; }
-  .salutation { font-family: var(--font-display); font-size: var(--step-1); }
-  .lead::first-letter { font-family: var(--font-display); float: left; font-size: 3.6em; line-height: 0.85; padding: 0.06em 0.12em 0 0; color: var(--ink); }
-  sup { font-size: 0.7em; line-height: 0; }
-  sup a { color: var(--seal); text-decoration: none; padding-inline: 0.1em; }
-  .sign { display: grid; gap: 0.2rem; margin-top: 1.5rem !important; }
-  .sig { font-family: var(--font-display); font-size: var(--step-1); }
+  .salutation { font-style: italic; font-size: 1.1em; }
+  .lead::first-letter { font-family: var(--font-display); float: left; font-size: 4.1em; line-height: .8; padding: .07em .1em 0 0; color: var(--seal); }
+  sup { font-family: var(--font-mono); font-size: .6em; line-height: 0; }
+  sup a { color: var(--seal); text-decoration: none; padding-inline: .15em; }
+
+  /* highlighter: an ochre stroke drawn under short phrases (kept on one line so a transform can draw it) */
+  mark { --mark: 1; position: relative; isolation: isolate; background: none; color: inherit; white-space: nowrap; }
+  mark::before { content: ''; position: absolute; z-index: -1; left: -.12em; right: -.12em; top: .5em; bottom: .02em; background: #e7c770; opacity: .75;
+                 transform: scaleX(var(--mark)) skewX(-8deg); transform-origin: left center; border-radius: 2px 6px 3px 5px; }
+  /* narrow screens: let phrases wrap; the stroke is then a static underlay */
+  @media (max-width: 959px) {
+    mark { white-space: normal; background: linear-gradient(transparent 52%, rgb(231 199 112 / .75) 52%); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    mark::before { display: none; }
+  }
+  @media (forced-colors: active) { mark { text-decoration: underline; } }
+
+  /* signature */
+  .sign { display: grid; gap: .15rem; margin-top: 1.5rem; font-family: var(--font-mono); font-size: var(--step--1); }
+  .sig { width: min(340px, 82%); height: auto; overflow: visible; margin: 0 0 .4rem -.4rem; }
+  .sig path { fill: none; stroke: var(--ink); stroke-width: 1.7; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+  .printed { font-family: var(--font-text); font-size: 1.15rem; }
   .sign .label { color: var(--ink-soft); }
-  .notes { font-size: var(--step--1); color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 0.75rem; }
-  .notes .label { margin: 0 0 0.5rem; }
-  .notes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+  .ps { font-style: italic; color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: 1rem; margin-top: .5rem !important; }
+
+  /* margin: pull quote and notes */
+  .side { display: grid; gap: 2.5rem; align-content: space-between; }
+  .pull { margin: 0; font-family: var(--font-display); font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.7rem); line-height: 1.02; color: var(--ink); text-wrap: balance; }
+  .pull::before { content: '“'; display: block; color: var(--seal); font-size: 1.6em; line-height: .6; height: .45em; }
+  .notes { font-size: var(--step--1); color: var(--ink-soft); border-top: 1px solid var(--rule); padding-top: .75rem; }
+  .notes .label { margin: 0 0 .5rem; }
+  .notes ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; }
   .notes li { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr); }
   .notes .n { color: var(--seal); }
-  .notes li:target { color: var(--ink); }
+  .notes li:target { color: var(--ink); background: rgb(231 199 112 / .35); }
   .src { white-space: nowrap; }
+  @media (max-width: 959px) { .pull { display: none; } }
 </style>
