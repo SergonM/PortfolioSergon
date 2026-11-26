@@ -9,7 +9,7 @@ export const analyst: Record<Locale, {
   fineprint: string; again: string;
 }> = {
   en: {
-    kicker: 'Section vii · Investor relations',
+    kicker: 'Section vii · Questions from the floor',
     title: 'Ask the analyst',
     lede: 'Questions from the floor. The analyst has read every page of this report and nothing else, so if it isn’t here, it will tell you.',
     operator: 'Operator', you: 'You', analyst: 'Analyst',
@@ -23,7 +23,7 @@ export const analyst: Record<Locale, {
     fineprint: 'Answers are written by Google Gemini from this site’s public facts only, and can still be wrong: the footnotes win. Your question is sent to Gemini to write the answer, so leave personal data out. Nothing is stored by this site.',
   },
   es: {
-    kicker: 'Sección vii · Relación con inversionistas',
+    kicker: 'Sección vii · Preguntas del público',
     title: 'Pregúntale al analista',
     lede: 'Preguntas desde el público. El analista leyó cada página de este informe y nada más, así que si algo no está aquí, te lo va a decir.',
     operator: 'Operador', you: 'Tú', analyst: 'Analista',

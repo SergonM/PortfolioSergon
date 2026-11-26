@@ -26,6 +26,26 @@ jobs:
         run: echo "::notice::CLOUDFLARE_API_TOKEN is not set; skipping the analyst deploy."
       - uses: actions/checkout@v4
         if: env.HAS_TOKEN == 'true'
+      - name: Hall of fame storage (Workers KV)
+        # Finds or creates the KV namespace "sgm-audit-hof" and binds it as HOF.
+        # If the token cannot manage KV, the deploy goes on and the hall of fame just stays closed.
+        if: env.HAS_TOKEN == 'true'
+        continue-on-error: true
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          api="https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/storage/kv/namespaces"
+          auth=(-H "Authorization: Bearer ${CF_TOKEN}")
+          id=$(curl -fsS "${auth[@]}" "${api}?per_page=100" | jq -r '.result[] | select(.title=="sgm-audit-hof") | .id' | head -n1)
+          if [ -z "$id" ]; then
+            id=$(curl -fsS "${auth[@]}" -H 'content-type: application/json' -d '{"title":"sgm-audit-hof"}' "$api" | jq -r '.result.id')
+            echo "Created KV namespace sgm-audit-hof"
+          fi
+          test -n "$id" && test "$id" != null
+          printf '\n[[kv_namespaces]]\nbinding = "HOF"\nid = "%s"\n' "$id" >> worker/wrangler.toml
+          echo "::notice::Hall of fame bound to KV namespace $id"
       - uses: cloudflare/wrangler-action@v3
         id: deploy
         if: env.HAS_TOKEN == 'true'
@@ -51,3 +71,8 @@ jobs:
           out=$(curl -s --max-time 120 -w '\n%{http_code}' -X POST -H 'Origin: https://sergonm.github.io' -H 'content-type: application/json' \
             -d '{"history":[{"role":"user","text":"In one sentence, what has he built with AI?"}]}' "$URL")
           echo "$out"; test "$(echo "$out" | tail -n1)" = 200
+          # The audit: the envelope headers are there, and a wrong vault signature is refused.
+          curl -s -D - -o /dev/null "$URL" | grep -qi '^x-audit-cipher:' && echo "Audit envelope present"
+          nonce=$(curl -s "$URL/audit/challenge" | jq -r .nonce)
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' -d "{\"nonce\":\"$nonce\",\"signature\":\"00\"}" "$URL/audit/vault")
+          echo "Vault with a bad signature -> $code (want 403)"; test "$code" = 403

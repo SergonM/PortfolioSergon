@@ -4,6 +4,7 @@ import { initSegments } from './segments';
 import { initInvestigation } from './investigation';
 import { initSimulator } from './simulator';
 import { initAnalyst } from './analyst';
+import { initAuditor } from './auditor';
 
 const hero = document.querySelector<HTMLElement>('[data-hero]');
 if (hero) initHero(hero);
@@ -12,6 +13,7 @@ initSegments();
 initInvestigation();
 initSimulator();
 initAnalyst();
+initAuditor();
 
 if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
   // GSAP, ScrollTrigger, SplitText and Lenis load as a separate chunk, after first paint.

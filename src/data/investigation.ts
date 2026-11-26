@@ -132,3 +132,37 @@ export const fig = {
     andes: 'Andes de altura', alt: '2.600 m', todo: 'Por estudiar', todoB: 'Altura · Bogotá',
   },
 } as const;
+
+/** The one-screen abstract the report carries; the full investigation lives on its own page. */
+export const abstract = {
+  en: {
+    findings: [
+      { t: 'Mothers with more schooling had fewer underweight babies, and it wasn’t luck.', n: 'Two-proportion Z test on DANE 2017, 2018, 2021 and 2022: Z = 4.04.' },
+      { t: 'The highest rate isn’t in the countryside. It’s Bogotá: 15 of every 100 babies, against 6 in Caquetá.', n: 'My own re-analysis of the 2022 records for this site.' },
+      { t: 'A model trained on {births} births runs in your browser and explains every prediction.', n: 'The riskiest fifth it flags has {top} underweight babies in 100; the safest fifth, {bottom}.' },
+    ],
+    read: 'Read the full investigation',
+    readMeta: '6 min · seven charts · a live model · a memo for an EPS',
+    skip: 'Or keep reading the report',
+    back: 'Back to the report',
+    pageTitle: 'Why are some babies born under 2,500 grams? · Sergio González, Inc.',
+    pageDescription: 'A data investigation on low birth weight in Colombia: four years of DANE birth records, a data warehouse, two hypothesis tests, a twist in Bogotá and a decision tree you can run in the browser.',
+    endKicker: 'End of the investigation',
+    endTitle: 'That was one project. The report has six more.',
+  },
+  es: {
+    findings: [
+      { t: 'Las madres con más estudios tuvieron menos bebés con bajo peso, y no fue suerte.', n: 'Prueba Z de dos proporciones con datos del DANE de 2017, 2018, 2021 y 2022: Z = 4,04.' },
+      { t: 'El registro más alto no está en el campo. Está en Bogotá: 15 de cada 100 bebés, frente a 6 en Caquetá.', n: 'Reanálisis propio de los registros de 2022 para este sitio.' },
+      { t: 'Un modelo entrenado con {births} nacimientos corre en tu navegador y explica cada predicción.', n: 'El quinto de mayor riesgo que señala tiene {top} bebés con bajo peso de cada 100; el de menor riesgo, {bottom}.' },
+    ],
+    read: 'Leer la investigación completa',
+    readMeta: '6 min · siete gráficos · un modelo en vivo · un memorando para una EPS',
+    skip: 'O sigue con el informe',
+    back: 'Volver al informe',
+    pageTitle: '¿Por qué algunos bebés nacen con menos de 2.500 gramos? · Sergio González, Inc.',
+    pageDescription: 'Una investigación de datos sobre bajo peso al nacer en Colombia: cuatro años de registros del DANE, una bodega de datos, dos pruebas de hipótesis, un giro en Bogotá y un árbol de decisión que corre en el navegador.',
+    endKicker: 'Fin de la investigación',
+    endTitle: 'Ese fue un proyecto. El informe tiene seis más.',
+  },
+} as const;

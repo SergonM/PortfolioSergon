@@ -5,8 +5,9 @@
  * - The model answers only from the site's public facts and cites their source IDs.
  */
 import { buildFacts } from './facts';
+import { envelope, handleAudit, type AuditEnv } from './audit';
 
-export interface Env {
+export interface Env extends AuditEnv {
   GEMINI_API_KEY: string;
   GEMINI_MODEL?: string;
   ALLOWED_ORIGINS?: string;
@@ -39,7 +40,7 @@ function cors(origin: string | null, env: Env): Record<string, string> {
   const ok = origin && allowed.includes(origin);
   return {
     'Access-Control-Allow-Origin': ok ? origin! : allowed[0],
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'content-type',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -110,11 +111,21 @@ export default {
     const origin = req.headers.get('Origin');
     const headers = cors(origin, env);
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-    if (req.method === 'GET') return json({ ok: true, service: 'sgm-analyst' }, 200, headers);
+    const path = new URL(req.url).pathname.replace(/\/+$/, '') || '/';
+    const ip = req.headers.get('CF-Connecting-IP') ?? 'anon';
+
+    // The hidden audit (section vi). Tools like curl send no Origin and are welcome; other websites are not.
+    if (path.startsWith('/audit')) {
+      if (origin && headers['Access-Control-Allow-Origin'] !== origin) return json({ error: 'origin' }, 403, headers);
+      if (req.method === 'POST' && env.LIMITER && !(await env.LIMITER.limit({ key: `audit:${ip}` })).success) return json({ error: 'busy' }, 429, headers);
+      const r = await handleAudit(req, env, path, (body, status) => json(body, status, headers));
+      if (r) return r;
+    }
+
+    if (req.method === 'GET') return json({ ok: true, service: 'sgm-analyst' }, 200, { ...headers, ...(await envelope(env)) });
     if (req.method !== 'POST') return json({ error: 'method' }, 405, headers);
     if (!origin || headers['Access-Control-Allow-Origin'] !== origin) return json({ error: 'origin' }, 403, headers);
 
-    const ip = req.headers.get('CF-Connecting-IP') ?? 'anon';
     if (env.LIMITER && !(await env.LIMITER.limit({ key: ip })).success) return json({ error: 'busy' }, 429, headers);
 
     let payload: any;
