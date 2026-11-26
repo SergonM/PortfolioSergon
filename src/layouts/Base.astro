@@ -95,6 +95,7 @@ const jsonLd = {
     </script>
   </head>
   <body id="top">
+    <Fragment set:html={`<!--\n  Auditor's working papers. Paper 1 of 3 is filed at\n  ${base}.well-known/security.txt\n  (Two more are hidden further in. The report's section vi explains the rules.)\n-->`} />
     <a class="skip" href="#main">{t.skip}</a>
     <RunningHead locale={locale} />
     <slot />
