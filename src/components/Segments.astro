@@ -1,0 +1,192 @@
+---
+import { segments, cases, segmentStrings } from '../data/segments';
+import { JNJ_PUBLIC } from '../data/disclosure';
+import { rosette } from '../lib/guilloche';
+import type { Locale } from '../i18n/strings';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const s = segmentStrings[locale];
+const visible = cases.filter((c) => JNJ_PUBLIC || !c.jnj);
+const embargoed = cases.length - visible.length;
+const ros = rosette(80, 22, 48, 11, 1400);
+const groups = segments.map((seg, i) => ({
+  seg, i,
+  items: visible.filter((c) => c.segment === seg.id),
+  embargo: seg.id === 'biz' && embargoed > 0,
+}));
+let folio = 0;
+---
+<section id="segments" class="seg" aria-labelledby="seg-title" data-segments>
+  <header class="wrap seg-head">
+    <p class="label kicker">{s.kicker}</p>
+    <h2 id="seg-title" data-typeset>{s.title}</h2>
+    <p class="lede">{s.lede}</p>
+    <ol class="seg-nav" data-seg-nav>
+      {groups.map((g) => (
+        <li data-nav={g.seg.id}>
+          <a href={`#seg-${g.seg.id}`}><span class="label code">{g.seg.code}</span><span class="nm">{g.seg.name[locale]}</span><span class="label n">{s.cases(g.items.length + (g.embargo ? 1 : 0))}</span></a>
+        </li>
+      ))}
+    </ol>
+  </header>
+
+  <div class="pin" data-pin>
+    <div class="rail" data-rail tabindex="0" aria-label={s.title}>
+      <div class="track" data-track>
+        {groups.map((g) => (
+          <>
+            <article class="divider" id={`seg-${g.seg.id}`} data-seg={g.seg.id} data-panel>
+              <svg class="d-ros" viewBox="-100 -100 200 200" aria-hidden="true" focusable="false"><path d={ros} /></svg>
+              <p class="label d-num">iii.{g.i + 1} · {s.cases(g.items.length + (g.embargo ? 1 : 0))}</p>
+              <p class="d-code" aria-hidden="true">{g.seg.code}</p>
+              <h3 class="d-name">{g.seg.name[locale]}</h3>
+              <p class="d-thesis">{g.seg.thesis[locale]}</p>
+            </article>
+            {g.items.map((c) => { folio++; return (
+              <article class="case" data-seg={g.seg.id} data-panel data-case aria-labelledby={`case-${c.id}`}>
+                <div class="c-left">
+                  <p class="label c-id"><span>Case {c.id}</span><span>{c.context[locale]}</span></p>
+                  <h3 id={`case-${c.id}`} class="c-title">{c.title[locale]}</h3>
+                  <p class="c-kpi" data-kpi><span class="v">{c.kpi.value[locale]}</span><span class="l">{c.kpi.label[locale]}</span></p>
+                  <p class="label c-stack">{c.stack}</p>
+                  <p class="label c-src">
+                    <span>[{c.source}]</span>
+                    {c.link && <a href={c.link} rel="noopener">{c.link.includes('tryhackme') ? s.profile : s.repo} ↗</a>}
+                  </p>
+                </div>
+                <ol class="steps">
+                  {[c.problem, c.decision, c.result, c.learning].map((txt, k) => (
+                    <li class:list={['step', `k${k}`]} data-step>
+                      <span class="bar" aria-hidden="true" data-bar></span>
+                      <span class="label st">{String(k + 1).padStart(2, '0')} {s.steps[k]}</span>
+                      <p>{txt[locale]}</p>
+                    </li>
+                  ))}
+                </ol>
+                <p class="label c-folio" aria-hidden="true">iii · {folio}</p>
+              </article>
+            ); })}
+            {g.embargo && (
+              <article class="case embargo" data-seg={g.seg.id} data-panel>
+                <div class="c-left">
+                  <p class="label c-id"><span>Case BIZ-0{1}–0{embargoed}</span><span>2026</span></p>
+                  <h3 class="c-title">{s.embargoTitle}</h3>
+                  <p class="e-body">{s.embargoBody}</p>
+                </div>
+                <div class="e-redacted" aria-hidden="true">
+                  {Array.from({ length: 7 }, (_, k) => <span style={`width:${[92, 74, 86, 60, 95, 70, 45][k]}%`}></span>)}
+                  <p class="e-stamp" data-stamp>{s.embargoStamp}</p>
+                </div>
+              </article>
+            )}
+          </>
+        ))}
+      </div>
+    </div>
+    <div class="wrap seg-foot" aria-hidden="true">
+      <span class="prog"><span class="prog-fill" data-progress></span></span>
+      <span class="label hint"><span class="hint-touch">{s.swipe} →</span><span class="hint-pointer">{s.scrollHint} ↓</span></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .seg { --spread-bg: #f4f3ec; --div-bg: #10201a; --div-fg: #e9e8df; border-top: 1px solid var(--rule); padding-top: 5rem; overflow-x: clip; }
+  .seg-head { display: grid; gap: .75rem; }
+  .kicker { color: var(--seal); margin: 0; }
+  h2 { font-size: var(--step-5); }
+  .lede { margin: 0; max-width: var(--measure); color: var(--ink-soft); }
+  .seg-nav { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--ink); }
+  .seg-nav a { display: grid; gap: .2rem; padding: .8rem .8rem .8rem 0; text-decoration: none; border-bottom: 3px solid transparent; transition: border-color .3s; }
+  .seg-nav li + li a { padding-left: .8rem; border-left: 1px solid var(--rule); }
+  .seg-nav li.on a { border-bottom-color: var(--seal); }
+  .seg-nav .code { color: var(--seal); }
+  .seg-nav .nm { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.1; }
+  .seg-nav .n { color: var(--ink-soft); }
+  @media (max-width: 640px) { .seg-nav { grid-template-columns: minmax(0, 1fr); } .seg-nav li + li a { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule); } }
+
+  /* ---------- rail: native horizontal swipe by default; GSAP pins it on wide screens ---------- */
+  .pin { padding-top: 2.5rem; }
+  .rail { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 1rem; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail:focus-visible { outline: 2px solid var(--seal); outline-offset: -2px; }
+  .track { display: flex; gap: clamp(16px, 2.5vw, 40px); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); width: max-content; align-items: stretch; }
+  :global(html.h-pinned) .rail { overflow: visible; scroll-snap-type: none; }
+  :global(html.h-pinned) .track { will-change: transform; }
+
+  [data-panel] { scroll-snap-align: center; flex: 0 0 auto; position: relative; }
+
+  /* divider: dark page, the segment as a cover */
+  .divider { width: min(88vw, 520px); min-height: min(76svh, 640px); background: var(--div-bg); color: var(--div-fg); padding: clamp(1.5rem, 3vw, 2.5rem); display: grid; align-content: end; gap: .8rem; overflow: hidden; }
+  .divider p { margin: 0; }
+  .d-ros { position: absolute; width: 150%; right: -70%; top: -30%; opacity: .5; }
+  .d-ros path { fill: none; stroke: #b0852b; stroke-width: .5; vector-effect: non-scaling-stroke; }
+  .d-num { position: absolute; top: clamp(1.5rem, 3vw, 2.5rem); left: clamp(1.5rem, 3vw, 2.5rem); color: #e2b8a0; }
+  .d-code { font-family: var(--font-display); font-size: clamp(6rem, 18vw, 13rem); line-height: .8; letter-spacing: -.04em; color: transparent; -webkit-text-stroke: 1px rgba(233, 232, 223, .55); }
+  .d-name { font-size: var(--step-3); color: #f3f2ea; }
+  .d-thesis { max-width: 30ch; color: #b9c0b6; }
+
+  /* case: a two-page spread */
+  .case { width: min(88vw, 1120px); min-height: min(76svh, 640px); background: var(--spread-bg); box-shadow: 0 30px 60px -38px rgba(0,0,0,.5); display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .case::before { content: ''; position: absolute; top: 0; bottom: 0; left: calc(5 / 12 * 100%); width: 1px; background: var(--rule); }
+  .case::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(5 / 12 * 100%); width: 40px; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgba(23,51,38,.06)); pointer-events: none; }
+  .c-left { padding: clamp(1.25rem, 3vw, 2.5rem); display: grid; align-content: start; gap: 1.1rem; min-width: 0; }
+  .c-left p { margin: 0; }
+  .c-id { display: flex; flex-wrap: wrap; gap: .3rem 1rem; color: var(--ink-soft); }
+  .c-id span:first-child { color: var(--seal); }
+  .c-title { font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.6rem); }
+  .c-kpi { display: grid; gap: .2rem; padding-block: 1rem; border-block: 1px solid var(--rule); }
+  .c-kpi .v { font-family: var(--font-display); font-size: clamp(3.4rem, 2rem + 5vw, 6.5rem); line-height: .9; letter-spacing: -.02em; color: var(--ink); display: inline-block; transform-origin: left bottom; }
+  .c-kpi .l { color: var(--ink-soft); }
+  .c-stack { color: var(--ink); line-height: 1.7; }
+  .c-src { display: flex; gap: 1rem; color: var(--ink-soft); }
+  .c-src a { color: var(--seal); }
+
+  .steps { list-style: none; margin: 0; padding: clamp(1.25rem, 3vw, 2.5rem); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.75rem 2rem; align-content: center; min-width: 0; }
+  .step { position: relative; padding-top: .9rem; display: grid; gap: .5rem; align-content: start; }
+  .step p { margin: 0; }
+  .bar { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--ink); transform-origin: left center; }
+  .st { color: var(--ink-soft); }
+  .k2 .bar { background: var(--seal); height: 3px; }
+  .k2 .st { color: var(--seal); }
+  .k3 p { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.25; }
+  .c-folio { position: absolute; right: 1.25rem; bottom: .9rem; color: var(--ink-soft); }
+
+  /* pinned spreads must fit a short laptop screen (1366×768, 1280×720): scale type with the viewport height */
+  @media (min-width: 901px) and (max-height: 1000px) {
+    .pin { padding-top: 1.25rem; }
+    .case { width: min(92vw, 1240px); min-height: min(80svh, 640px); }
+    .c-left { gap: .8rem; padding: clamp(1rem, 2.6vh, 2rem) clamp(1.25rem, 2.5vw, 2.25rem); }
+    .c-title { font-size: clamp(1.4rem, .6rem + 2.6vh, 2.2rem); }
+    .c-kpi { padding-block: .6rem; }
+    .c-kpi .v { font-size: clamp(2.8rem, 1rem + 6vh, 5.5rem); }
+    .c-stack { line-height: 1.5; }
+    .steps { padding: clamp(1rem, 2.6vh, 2rem) clamp(1.25rem, 2.5vw, 2.25rem); gap: clamp(.9rem, 2.4vh, 1.75rem) 1.75rem; }
+    .step { padding-top: .7rem; gap: .35rem; }
+    .step p { font-size: clamp(.84rem, .42rem + 1.1vh, 1rem); line-height: 1.5; }
+    .k3 p { font-size: clamp(1rem, .5rem + 1.3vh, 1.35rem); line-height: 1.2; }
+  }
+
+  @media (max-width: 900px) {
+    .case { grid-template-columns: minmax(0, 1fr); width: 88vw; min-height: 0; }
+    .case::before, .case::after { display: none; }
+    .steps { grid-template-columns: minmax(0, 1fr); padding-top: 0; gap: 1.25rem; }
+    .divider { min-height: 0; aspect-ratio: auto; padding-top: 5rem; }
+  }
+
+  /* embargo */
+  .embargo .e-body { max-width: 40ch; color: var(--ink-soft); }
+  .e-redacted { position: relative; padding: clamp(1.25rem, 3vw, 2.5rem); display: grid; gap: 1rem; align-content: center; }
+  .e-redacted span { display: block; height: 1.15rem; background: #111; }
+  .e-stamp { position: absolute; left: 50%; top: 50%; margin: 0; transform: translate(-50%, -50%) rotate(-12deg); border: 3px double var(--seal); color: var(--seal); background: var(--spread-bg);
+             font-family: var(--font-display); font-size: clamp(1.6rem, 4vw, 3rem); padding: .2em .6em; letter-spacing: .04em; }
+
+  .seg-foot { display: flex; align-items: center; gap: 1.5rem; padding-block: 1rem 4rem; }
+  .prog { flex: 1; height: 2px; background: var(--rule); position: relative; overflow: hidden; }
+  .prog-fill { position: absolute; inset: 0; background: var(--seal); transform: scaleX(0); transform-origin: left center; }
+  .hint { color: var(--ink-soft); }
+  .hint-pointer { display: none; }
+  :global(html.h-pinned) .hint-pointer { display: inline; }
+  :global(html.h-pinned) .hint-touch { display: none; }
+</style>
