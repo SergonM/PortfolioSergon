@@ -56,7 +56,7 @@ const msData = ms.map((m, i) => ({ when: m.when[locale], title: m.title[locale],
         <p class="quote"><span class="sym">SGM</span><span class="up">{t.chartUp(n)}</span><span class="label dim">{t.chartKicker}</span></p>
         <p class="label dim">{t.chartAxis}</p>
         <div class="chart">
-          <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="chart-cap" data-chart>
+          <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-labelledby="chart-cap" data-chart>
             <title id="chart-cap">{t.chartKicker}: {n}</title>
             <defs><clipPath id="reveal"><rect x="0" y="0" width={W} height={H} data-reveal-rect /></clipPath></defs>
             <g class="grid">{ticks.map((v) => <g><line x1={X0} x2={X1} y1={y(v)} y2={y(v)} /><text x={X0 - 10} y={y(v) + 4} text-anchor="end">{v}</text></g>)}</g>
