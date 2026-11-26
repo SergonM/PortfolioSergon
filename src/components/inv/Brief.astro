@@ -1,0 +1,255 @@
+---
+/**
+ * Section iv, close: the business memo. What an EPS (Colombian health insurer) or the Ministry of Health
+ * could do with the investigation. Every figure is read from the aggregates and the tree at build time.
+ */
+import type { Locale } from '../../i18n/strings';
+import agg from '../../data/bpn-aggregates.json';
+import tree from '../../data/bpn-tree.json';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const es = locale === 'es';
+const nf = (n: number) => Math.round(n).toLocaleString(es ? 'es-CO' : 'en-US');
+const p = (r: number) => Math.round(r * 100); // share → "of every 100"
+
+// the capture curve: first point at or past a quarter of births
+const g = agg.gains as [number, number][];
+const q = g.find(([x]) => x >= 0.25)!;
+const tw = g[2]; // the two twin groups sit first: they are the riskiest leaves
+const bog = agg.departments.find((d) => d.code === 11)!;
+const vNone = p(agg.visits[0]), vFull = p(agg.visits[3]);
+const kb = Math.ceil(JSON.stringify({ c: tree.columns, n: tree.nodes }).length / 1024);
+
+const T = es ? {
+  kicker: 'Sección iv · Cierre', title: 'Bien, ¿y qué hace una EPS con esto?',
+  memo: 'Memorando', to: 'Para', toV: 'Junta directiva de una EPS · Ministerio de Salud (ejercicio)', from: 'De', fromV: 'Sergio González',
+  ref: 'Ref.', subj: 'Asunto', subjV: `Qué hacer con los ${nf(agg.cases)} bebés que nacieron con bajo peso en 2022`,
+  chartT: `Vigilar a ${p(q[0])} de cada 100 embarazos alcanza a ${p(q[1])} de cada 100 bebés con bajo peso`,
+  chartA: 'Embarazos vigilados, del más al menos riesgoso', chartB: 'Bebés con bajo peso alcanzados',
+  rand: 'al azar', model: 'con el árbol', twins: 'gemelos',
+  chartN: 'Nacimientos de 2022 que el árbol nunca vio durante el entrenamiento (20 % reservado).',
+  items: [
+    { who: 'EPS', t: 'Ordenar la lista antes de repartir citas',
+      b: `Con las siete respuestas del certificado, el árbol ordena los embarazos por riesgo. El ${p(q[0])} % más riesgoso concentró ${p(q[1])} de cada 100 bebés con bajo peso. Al azar, el mismo esfuerzo alcanzaría ${p(q[0])}.`,
+      a: 'Consulta de alto riesgo, nutrición y ecografías primero para ese grupo. La lista se recalcula en cada control.', k: 'Qué parte de los bebés con bajo peso tuvo seguimiento reforzado.' },
+    { who: 'EPS', t: 'Gemelos: ruta de alto riesgo desde la primera ecografía',
+      b: `Son ${p(agg.twins.share_births)} de cada 100 nacimientos y ${p(agg.twins.share_cases)} de cada 100 bebés con bajo peso: ${p(agg.twins.rate)} de cada 100 gemelos nacen por debajo de 2.500 g.`,
+      a: 'Marcarlos de forma automática en cuanto la ecografía confirma el embarazo múltiple.', k: 'Semanas entre el diagnóstico y la primera consulta especializada.' },
+    { who: 'EPS', t: 'Perseguir el control que falta',
+      b: `Sin controles prenatales, ${vNone} de cada 100 bebés nacieron con bajo peso; con 7 o más, ${vFull}. Esto no prueba que el control lo cause: quien va a control también difiere en otras cosas.`,
+      a: 'Alerta cuando un embarazo se atrasa en controles, y un piloto con grupo de comparación antes de escalar.', k: 'Diferencia de bajo peso entre el piloto y el grupo de comparación.' },
+    { who: 'MinSalud', t: 'Medir por territorio, empezando por Bogotá',
+      b: `Bogotá tiene ${p(bog.share_births)} de cada 100 nacimientos del país y ${p(bog.share_cases)} de cada 100 bebés con bajo peso. Un promedio nacional esconde eso.`,
+      a: 'Metas por departamento en lugar de una sola meta nacional, y un estudio de altura con datos clínicos.', k: 'Bajo peso al nacer por departamento, cada año.' },
+  ],
+  act: 'Acción', kpi: 'Se mide',
+  noT: 'No autorizado para', no: [
+    `Negar afiliación, subir tarifas o juzgar a una madre: cada grupo reúne al menos ${nf(tree.params.min_samples_leaf)} nacimientos; describe grupos, no personas.`,
+    `Diagnosticar: ordena mejor que el azar (AUC ${tree.metrics.auc.toFixed(2).replace('.', ',')}), no lo bastante para decidir solo.`,
+    'Desplegarse sin revisar antes si trata distinto a madres del régimen subsidiado o de zonas rurales.',
+    'Publicar registros: el sitio solo muestra conteos agregados; los microdatos del DANE no salen del entrenamiento.',
+  ],
+  stamp: 'Apto para piloto',
+  prod: `Cómo llega a producción: el árbol cabe en ${kb} KB y no necesita servidor. Corre en un navegador, en una hoja de cálculo o dentro del sistema de la EPS, y se reentrena cada año cuando el DANE publica el archivo nuevo.`,
+  src: 'Fuente: DANE, Estadísticas Vitales 2022. Cálculos propios en ml/aggregates.py, solo agregados.',
+} : {
+  kicker: 'Section iv · Close', title: 'Fine. What would an insurer do with this?',
+  memo: 'Memorandum', to: 'To', toV: 'Board of a Colombian health insurer (EPS) · Ministry of Health (exercise)', from: 'From', fromV: 'Sergio González',
+  ref: 'Ref.', subj: 'Subject', subjV: `What to do about the ${nf(agg.cases)} babies born underweight in 2022`,
+  chartT: `Watching ${p(q[0])} of every 100 pregnancies reaches ${p(q[1])} of every 100 underweight babies`,
+  chartA: 'Pregnancies watched, riskiest first', chartB: 'Underweight babies reached',
+  rand: 'at random', model: 'with the tree', twins: 'twins',
+  chartN: '2022 births the tree never saw during training (20% held out).',
+  items: [
+    { who: 'EPS', t: 'Rank the list before handing out appointments',
+      b: `With the seven answers on the certificate, the tree ranks pregnancies by risk. The riskiest ${p(q[0])}% held ${p(q[1])} of every 100 underweight babies. At random, the same effort would reach ${p(q[0])}.`,
+      a: 'High-risk consults, nutrition and scans go to that group first. The list is recomputed at every check-up.', k: 'Share of underweight babies whose mothers got the extra follow-up.' },
+    { who: 'EPS', t: 'Twins: high-risk pathway from the first scan',
+      b: `They are ${p(agg.twins.share_births)} of every 100 births and ${p(agg.twins.share_cases)} of every 100 underweight babies: ${p(agg.twins.rate)} of every 100 twins are born under 2,500 g.`,
+      a: 'Flag them automatically as soon as the scan confirms a multiple pregnancy.', k: 'Weeks from diagnosis to the first specialist visit.' },
+    { who: 'EPS', t: 'Chase the missing check-up',
+      b: `With no prenatal check-ups, ${vNone} of every 100 babies were underweight; with 7 or more, ${vFull}. That doesn’t prove the check-ups cause it: mothers who attend differ in other ways too.`,
+      a: 'An alert when a pregnancy falls behind on check-ups, and a pilot with a comparison group before scaling.', k: 'Gap in low birth weight between the pilot and the comparison group.' },
+    { who: 'Ministry', t: 'Measure by region, starting with Bogotá',
+      b: `Bogotá has ${p(bog.share_births)} of every 100 births in the country and ${p(bog.share_cases)} of every 100 underweight babies. A national average hides that.`,
+      a: 'Targets by department instead of a single national one, and an altitude study with clinical data.', k: 'Low birth weight by department, every year.' },
+  ],
+  act: 'Action', kpi: 'Measured by',
+  noT: 'Not cleared for', no: [
+    `Denying cover, raising premiums or judging a mother: every group holds at least ${nf(tree.params.min_samples_leaf)} births; it describes groups, not people.`,
+    `Diagnosis: it ranks better than chance (AUC ${tree.metrics.auc.toFixed(2)}), not well enough to decide on its own.`,
+    'Going live before checking whether it treats subsidised-scheme or rural mothers differently.',
+    'Publishing records: the site only shows aggregate counts; DANE microdata never leaves training.',
+  ],
+  stamp: 'Cleared for pilot',
+  prod: `How it reaches production: the tree fits in ${kb} KB and needs no server. It runs in a browser, a spreadsheet or inside the insurer’s own system, and is retrained every year when DANE publishes the new file.`,
+  src: 'Source: DANE, Estadísticas Vitales 2022. Own calculations in ml/aggregates.py, aggregates only.',
+};
+
+// capture chart geometry (viewBox 600 × 440)
+const L = 64, R = 576, TOP = 30, B = 380;
+const cx = (x: number) => L + x * (R - L);
+const cy = (y: number) => B - y * (B - TOP);
+const curve = g.map(([x, y], i) => `${i ? 'L' : 'M'}${cx(x).toFixed(1)} ${cy(y).toFixed(1)}`).join(' ');
+const area = `${curve} L${cx(1)} ${B} L${cx(0)} ${B} Z`;
+const ticks = [0, 25, 50, 75, 100];
+---
+<section class="brief" id="brief" data-brief data-tone="dark" aria-labelledby="brief-title">
+  <div class="wrap">
+    <p class="label kicker">{T.kicker}</p>
+    <h2 id="brief-title" data-typeset>{T.title}</h2>
+
+    <article class="memo">
+      <header class="mh">
+        <p class="mt">{T.memo}</p>
+        <dl>
+          <div><dt class="label">{T.to}</dt><dd>{T.toV}</dd></div>
+          <div><dt class="label">{T.from}</dt><dd>{T.fromV}</dd></div>
+          <div><dt class="label">{T.ref}</dt><dd>PRJ-NEO · 02</dd></div>
+          <div><dt class="label">{T.subj}</dt><dd><strong>{T.subjV}</strong></dd></div>
+        </dl>
+      </header>
+
+      <div class="gw">
+      <figure class="gains" data-brief-anim>
+        <figcaption><span class="label">01</span> {T.chartT}</figcaption>
+        <svg viewBox="0 0 600 440" role="img" aria-label={T.chartT}>
+          <g class="grid">
+            {ticks.map((t) => <line x1={cx(t / 100)} y1={TOP} x2={cx(t / 100)} y2={B} />)}
+            {ticks.map((t) => <line x1={L} y1={cy(t / 100)} x2={R} y2={cy(t / 100)} />)}
+          </g>
+          <g class="draw">
+            <path class="area" d={area} />
+            <path class="curve" d={curve} />
+          </g>
+          <rect class="cover" x={L - 2} y={TOP - 12} width={R - L + 24} height={B - TOP + 14} />
+          <line class="diag" x1={cx(0)} y1={cy(0)} x2={cx(1)} y2={cy(1)} />
+          <text class="dl" x={cx(0.62)} y={cy(0.62) + 26} transform={`rotate(-34.5 ${cx(0.62)} ${cy(0.62) + 26})`}>{T.rand}</text>
+          <g class="axis">
+            <line x1={L} y1={B} x2={R} y2={B} /><line x1={L} y1={B} x2={L} y2={TOP} />
+            {ticks.map((t) => <text x={cx(t / 100)} y={B + 22} text-anchor="middle">{t}</text>)}
+            {ticks.slice(1).map((t) => <text x={L - 10} y={cy(t / 100) + 5} text-anchor="end">{t}</text>)}
+            <text class="an" x={R} y={B + 50} text-anchor="end">{T.chartA} →</text>
+            <text class="an" x={L - 46} y={TOP - 12}>↑ {T.chartB}</text>
+          </g>
+          <g class="pin p1">
+            <line x1={cx(q[0])} y1={cy(q[1])} x2={cx(q[0])} y2={B} />
+            <line x1={L} y1={cy(q[1])} x2={cx(q[0])} y2={cy(q[1])} />
+            <circle cx={cx(q[0])} cy={cy(q[1])} r="7" />
+            <text class="pv" x={cx(q[0]) + 14} y={cy(q[1]) + 30}>{p(q[0])} → {p(q[1])}</text>
+            <text class="pl" x={cx(q[0]) + 14} y={cy(q[1]) + 50}>{T.model}</text>
+          </g>
+          <g class="pin p2">
+            <circle cx={cx(tw[0])} cy={cy(tw[1])} r="5" />
+            <text class="pl" x={cx(tw[0]) + 12} y={cy(tw[1]) - 8}>{T.twins}: {p(tw[0])} → {p(tw[1])}</text>
+          </g>
+        </svg>
+        <p class="note">{T.chartN}</p>
+      </figure>
+      </div>
+
+      <ol class="items">
+        {T.items.map((it, i) => (
+          <li data-brief-anim style={`--i:${i}`}>
+            <p class="who label"><span>{String(i + 2).padStart(2, '0')}</span> {it.who}</p>
+            <h3>{it.t}</h3>
+            <p class="b">{it.b}</p>
+            <p class="a"><span class="label">{T.act}</span> {it.a}</p>
+            <p class="k"><span class="label">{T.kpi}</span> {it.k}</p>
+          </li>
+        ))}
+      </ol>
+
+      <aside class="no" data-brief-anim>
+        <p class="label nt">{T.noT}</p>
+        <ul>{T.no.map((n) => <li>{n}</li>)}</ul>
+        <p class="stamp" aria-hidden="true"><span>{T.stamp}</span></p>
+      </aside>
+
+      <p class="prod">{T.prod}</p>
+      <p class="label src">{T.src} <span>[PRJ-NEO]</span></p>
+    </article>
+  </div>
+</section>
+
+<style>
+  .brief { --bg: #10201a; --red: #e2614c; background: var(--bg); color: #e9e8df; padding-block: 1rem 6rem; }
+  .kicker { color: var(--red); margin: 0 0 .8rem; }
+  h2 { font-size: var(--step-5); color: #f3f2ea; max-width: 16ch; margin-bottom: 2.2rem; }
+
+  .memo { background: var(--paper); color: var(--ink); padding: clamp(1.1rem, 3vw, 3rem); display: grid; gap: 2.2rem; position: relative;
+          border: 1px solid var(--ink); outline: 1px solid var(--ink); outline-offset: -8px; box-shadow: 0 40px 80px -40px rgba(0, 0, 0, .8); }
+  .mh { display: grid; gap: 1rem; border-bottom: 3px double var(--ink); padding-bottom: 1.2rem; }
+  .mt { margin: 0; font-family: var(--font-display); font-size: clamp(2.4rem, 1.6rem + 4vw, 4.4rem); line-height: .9; letter-spacing: -.01em; }
+  dl { margin: 0; display: grid; gap: .35rem; }
+  dl div { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: .8rem; border-top: 1px solid var(--rule); padding-top: .35rem; }
+  dt { color: var(--ink-soft); }
+  dd { margin: 0; }
+  dd strong { font-weight: 400; font-family: var(--font-display); font-size: var(--step-1); line-height: 1.15; }
+
+  .gains { margin: 0; display: grid; gap: .6rem; }
+  .gains figcaption { font-family: var(--font-display); font-size: clamp(1.4rem, 1.1rem + 1.5vw, 2.3rem); line-height: 1.1; max-width: 26ch; text-wrap: balance; }
+  .gains figcaption .label { font-family: var(--font-mono); color: var(--seal); vertical-align: middle; margin-right: .3rem; }
+  .gains svg { width: 100%; max-width: 760px; height: auto; overflow: hidden; }
+  .gains text { font-family: var(--font-mono); font-size: 14px; fill: var(--ink-soft); }
+  .grid line { stroke: var(--rule); stroke-width: .6; }
+  .axis line { stroke: var(--ink); stroke-width: 1.2; }
+  .area { fill: rgba(163, 38, 31, .1); }
+  .curve { fill: none; stroke: var(--seal); stroke-width: 3.5; stroke-linejoin: round; }
+  .cover { fill: var(--paper); opacity: 0; }
+  .diag { stroke: var(--ink); stroke-width: 1.2; stroke-dasharray: 5 6; }
+  .dl { font-size: 13px; text-transform: uppercase; letter-spacing: .12em; }
+  .an { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; }
+  .pin line { stroke: var(--seal); stroke-width: 1; stroke-dasharray: 3 4; }
+  .pin circle { fill: var(--seal); stroke: var(--paper); stroke-width: 3; }
+  .gains .pv { font-family: var(--font-display); font-size: 40px; fill: var(--seal); }
+  .gains .pl { font-size: 14px; fill: var(--ink); }
+  .note { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+
+  .items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: it; }
+  .items li { display: grid; gap: .5rem; padding: 1.2rem 0; border-top: 1px solid var(--ink); }
+  .items p { margin: 0; }
+  .who { color: var(--seal); }
+  .who span { color: var(--ink); }
+  .items h3 { font-size: clamp(1.4rem, 1.15rem + 1.1vw, 2rem); }
+  .b { max-width: 62ch; }
+  .a, .k { font-size: .92rem; color: var(--ink-soft); max-width: 62ch; }
+  .a .label, .k .label { display: block; color: var(--ink); }
+
+  .no { border: 2px solid var(--seal); padding: 1.2rem 1.2rem 1.4rem; position: relative; display: grid; gap: .6rem; }
+  .nt { color: var(--seal); margin: 0; }
+  .no ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .45rem; max-width: 70ch; }
+  .no li::marker { content: '✕  '; color: var(--seal); }
+  .stamp { position: absolute; right: clamp(.4rem, 3vw, 2rem); bottom: -1.6rem; margin: 0; transform: rotate(-7deg); pointer-events: none; }
+  .stamp span { display: inline-block; font-family: var(--font-display); font-size: clamp(1.3rem, 1rem + 1.4vw, 2.1rem); color: var(--seal); text-transform: uppercase; letter-spacing: .04em;
+                border: 3px solid var(--seal); outline: 1px solid var(--seal); outline-offset: 3px; padding: .2rem .8rem; background: var(--paper); }
+  .prod { margin: 1rem 0 0; font-family: var(--font-display); font-size: var(--step-1); line-height: 1.3; max-width: 46ch; }
+  .src { margin: 0; color: var(--ink-soft); line-height: 1.7; }
+  .src span { color: var(--ink); }
+
+  @media (min-width: 901px) {
+    .memo { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 3rem; }
+    .mh, .no, .prod, .src { grid-column: 1 / -1; }
+    .mh { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; column-gap: 3rem; }
+    .gains { position: sticky; top: 1.5rem; }
+    .items li:first-child { border-top: 0; padding-top: 0; }
+  }
+  @media (max-width: 600px) {
+    .gains text { font-size: 20px; }
+    .an, .dl { font-size: 16px !important; }
+    .gains .pv { font-size: 50px; }
+    .gains .pl { font-size: 19px; }
+  }
+
+  /* ---------- motion: only with JS, only transform and opacity ---------- */
+  :global(html.js) .cover { opacity: 1; transform-box: view-box; transform-origin: 0 0; transition: transform 1.8s cubic-bezier(.6, 0, .2, 1) .2s; }
+  :global(html.js) .is-in .cover { transform: translateX(560px); }
+  :global(html.js) .pin { opacity: 0; transform: translateY(10px); transition: opacity .4s, transform .5s cubic-bezier(.2, 1.4, .4, 1); }
+  :global(html.js) .is-in .p2 { opacity: 1; transform: none; transition-delay: .7s; }
+  :global(html.js) .is-in .p1 { opacity: 1; transform: none; transition-delay: 1.4s; }
+  :global(html.js) .items li { opacity: 0; transform: translateY(24px); transition: opacity .5s, transform .7s cubic-bezier(.2, .8, .2, 1); }
+  :global(html.js) .items li.is-in { opacity: 1; transform: none; }
+  :global(html.js) .stamp { opacity: 0; transform: rotate(-20deg) scale(2.2); transition: transform .4s cubic-bezier(.3, 1.5, .5, 1) .5s, opacity .15s .5s; }
+  :global(html.js) .is-in .stamp { opacity: 1; transform: rotate(-7deg); }
+</style>

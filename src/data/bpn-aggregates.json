@@ -1,0 +1,383 @@
+{
+ "source": "DANE, Estadísticas Vitales (nacimientos)",
+ "births": 567800,
+ "cases": 59489,
+ "rate": 0.1048,
+ "bands": [
+  2445,
+  4535,
+  10765,
+  41744,
+  169966,
+  238535,
+  88011,
+  11765
+ ],
+ "departments": [
+  {
+   "code": 11,
+   "name": "Bogotá",
+   "births": 64700,
+   "rate": 0.1523,
+   "share_births": 0.114,
+   "share_cases": 0.1657
+  },
+  {
+   "code": 25,
+   "name": "Cundinamarca",
+   "births": 31200,
+   "rate": 0.1345,
+   "share_births": 0.0549,
+   "share_cases": 0.0704
+  },
+  {
+   "code": 52,
+   "name": "Nariño",
+   "births": 14000,
+   "rate": 0.122,
+   "share_births": 0.0247,
+   "share_cases": 0.0288
+  },
+  {
+   "code": 15,
+   "name": "Boyacá",
+   "births": 12000,
+   "rate": 0.1152,
+   "share_births": 0.0211,
+   "share_cases": 0.0232
+  },
+  {
+   "code": 27,
+   "name": "Chocó",
+   "births": 6500,
+   "rate": 0.1122,
+   "share_births": 0.0115,
+   "share_cases": 0.0123
+  },
+  {
+   "code": 66,
+   "name": "Risaralda",
+   "births": 8900,
+   "rate": 0.1116,
+   "share_births": 0.0156,
+   "share_cases": 0.0166
+  },
+  {
+   "code": 88,
+   "name": "San Andrés",
+   "births": 700,
+   "rate": 0.1103,
+   "share_births": 0.0012,
+   "share_cases": 0.0013
+  },
+  {
+   "code": 44,
+   "name": "La Guajira",
+   "births": 22100,
+   "rate": 0.1087,
+   "share_births": 0.0389,
+   "share_cases": 0.0404
+  },
+  {
+   "code": 5,
+   "name": "Antioquia",
+   "births": 66600,
+   "rate": 0.1072,
+   "share_births": 0.1173,
+   "share_cases": 0.1201
+  },
+  {
+   "code": 70,
+   "name": "Sucre",
+   "births": 13600,
+   "rate": 0.1049,
+   "share_births": 0.024,
+   "share_cases": 0.024
+  },
+  {
+   "code": 17,
+   "name": "Caldas",
+   "births": 7700,
+   "rate": 0.1021,
+   "share_births": 0.0136,
+   "share_cases": 0.0132
+  },
+  {
+   "code": 8,
+   "name": "Atlántico",
+   "births": 36100,
+   "rate": 0.1012,
+   "share_births": 0.0636,
+   "share_cases": 0.0615
+  },
+  {
+   "code": 63,
+   "name": "Quindío",
+   "births": 4800,
+   "rate": 0.0993,
+   "share_births": 0.0084,
+   "share_cases": 0.008
+  },
+  {
+   "code": 76,
+   "name": "Valle del Cauca",
+   "births": 40800,
+   "rate": 0.0988,
+   "share_births": 0.0719,
+   "share_cases": 0.0678
+  },
+  {
+   "code": 99,
+   "name": "Vichada",
+   "births": 1500,
+   "rate": 0.0959,
+   "share_births": 0.0026,
+   "share_cases": 0.0024
+  },
+  {
+   "code": 91,
+   "name": "Amazonas",
+   "births": 900,
+   "rate": 0.0958,
+   "share_births": 0.0016,
+   "share_cases": 0.0015
+  },
+  {
+   "code": 13,
+   "name": "Bolívar",
+   "births": 33900,
+   "rate": 0.0956,
+   "share_births": 0.0597,
+   "share_cases": 0.0544
+  },
+  {
+   "code": 19,
+   "name": "Cauca",
+   "births": 16400,
+   "rate": 0.0953,
+   "share_births": 0.0288,
+   "share_cases": 0.0262
+  },
+  {
+   "code": 23,
+   "name": "Córdoba",
+   "births": 24100,
+   "rate": 0.0944,
+   "share_births": 0.0424,
+   "share_cases": 0.0382
+  },
+  {
+   "code": 20,
+   "name": "Cesar",
+   "births": 21500,
+   "rate": 0.091,
+   "share_births": 0.0378,
+   "share_cases": 0.0328
+  },
+  {
+   "code": 68,
+   "name": "Santander",
+   "births": 24400,
+   "rate": 0.0895,
+   "share_births": 0.043,
+   "share_cases": 0.0368
+  },
+  {
+   "code": 73,
+   "name": "Tolima",
+   "births": 14500,
+   "rate": 0.0887,
+   "share_births": 0.0255,
+   "share_cases": 0.0216
+  },
+  {
+   "code": 47,
+   "name": "Magdalena",
+   "births": 21800,
+   "rate": 0.0875,
+   "share_births": 0.0384,
+   "share_cases": 0.0321
+  },
+  {
+   "code": 86,
+   "name": "Putumayo",
+   "births": 4500,
+   "rate": 0.0824,
+   "share_births": 0.0079,
+   "share_cases": 0.0062
+  },
+  {
+   "code": 41,
+   "name": "Huila",
+   "births": 16200,
+   "rate": 0.079,
+   "share_births": 0.0285,
+   "share_cases": 0.0215
+  },
+  {
+   "code": 50,
+   "name": "Meta",
+   "births": 14100,
+   "rate": 0.075,
+   "share_births": 0.0249,
+   "share_cases": 0.0178
+  },
+  {
+   "code": 54,
+   "name": "Norte de Santander",
+   "births": 21800,
+   "rate": 0.0738,
+   "share_births": 0.0383,
+   "share_cases": 0.027
+  },
+  {
+   "code": 85,
+   "name": "Casanare",
+   "births": 5800,
+   "rate": 0.0728,
+   "share_births": 0.0102,
+   "share_cases": 0.0071
+  },
+  {
+   "code": 81,
+   "name": "Arauca",
+   "births": 3900,
+   "rate": 0.0681,
+   "share_births": 0.0068,
+   "share_cases": 0.0044
+  },
+  {
+   "code": 95,
+   "name": "Guaviare",
+   "births": 1200,
+   "rate": 0.0659,
+   "share_births": 0.0022,
+   "share_cases": 0.0014
+  },
+  {
+   "code": 94,
+   "name": "Guainía",
+   "births": 1100,
+   "rate": 0.0646,
+   "share_births": 0.0019,
+   "share_cases": 0.0012
+  },
+  {
+   "code": 97,
+   "name": "Vaupés",
+   "births": 500,
+   "rate": 0.063,
+   "share_births": 0.0009,
+   "share_cases": 0.0006
+  },
+  {
+   "code": 18,
+   "name": "Caquetá",
+   "births": 5700,
+   "rate": 0.061,
+   "share_births": 0.0101,
+   "share_cases": 0.0059
+  }
+ ],
+ "area": {
+  "all": {
+   "town": 0.1065,
+   "village": 0.0892,
+   "rural": 0.1036
+  },
+  "without_bogota": {
+   "town": 0.0983,
+   "village": 0.0891,
+   "rural": 0.1036
+  }
+ },
+ "twins": {
+  "share_births": 0.0183,
+  "share_cases": 0.1248,
+  "rate": 0.7128
+ },
+ "visits": [
+  0.1621,
+  0.142,
+  0.123,
+  0.0768
+ ],
+ "gains": [
+  [
+   0.0,
+   0.0
+  ],
+  [
+   0.0097,
+   0.0712
+  ],
+  [
+   0.0182,
+   0.1227
+  ],
+  [
+   0.0228,
+   0.1297
+  ],
+  [
+   0.0332,
+   0.15
+  ],
+  [
+   0.0746,
+   0.2171
+  ],
+  [
+   0.1086,
+   0.2636
+  ],
+  [
+   0.2608,
+   0.4486
+  ],
+  [
+   0.3409,
+   0.531
+  ],
+  [
+   0.3526,
+   0.542
+  ],
+  [
+   0.3636,
+   0.5541
+  ],
+  [
+   0.3695,
+   0.5613
+  ],
+  [
+   0.5423,
+   0.7084
+  ],
+  [
+   0.6553,
+   0.7924
+  ],
+  [
+   0.686,
+   0.8143
+  ],
+  [
+   0.7072,
+   0.8312
+  ],
+  [
+   0.8056,
+   0.8969
+  ],
+  [
+   0.8894,
+   0.9453
+  ],
+  [
+   1.0,
+   1.0
+  ]
+ ]
+}

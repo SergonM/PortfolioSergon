@@ -1,6 +1,7 @@
 ---
 import { inv, steps, fig } from '../data/investigation';
 import { rosette } from '../lib/guilloche';
+import agg from '../data/bpn-aggregates.json';
 import type { Locale } from '../i18n/strings';
 
 interface Props { locale: Locale }
@@ -12,6 +13,36 @@ const fmt = (n: number, d = 0) => n.toLocaleString(locale === 'es' ? 'es-CO' : '
 // 01 the line: 0–5,000 g on x
 const gx = (g: number) => 40 + g * 0.104;
 const bandTicks = [1000, 1500, 2000, 2500, 3000, 3500, 4000];
+
+// 01 the bars: every 2022 birth by DANE weight band, eight equal columns, the 2,500 g line between the 4th and 5th
+const bandLabels = locale === 'es' ? ['<1.000', '1.000', '1.500', '2.000', '2.500', '3.000', '3.500', '4.000+'] : ['<1,000', '1,000', '1,500', '2,000', '2,500', '3,000', '3,500', '4,000+'];
+const bandTotal = agg.bands.reduce((a, b) => a + b, 0);
+const bandMax = Math.max(...agg.bands);
+const bars = agg.bands.map((n, i) => {
+  const h = (n / bandMax) * 220, share = (n / bandTotal) * 100;
+  return { i, x: 40 + i * 65 + 5, w: 55, h, y: 400 - h, low: i < 4, pct: fmt(share, share < 10 ? 1 : 0) + ' %' };
+});
+
+// 06 the departments: a swarm along the rate axis, dot area ∝ births, placed at build time
+const RX0 = 0.05, RX1 = 0.16;
+const rx = (r: number) => 50 + ((r - RX0) / (RX1 - RX0)) * 510;
+const HIGH = new Set([11, 25, 52, 15]);
+const maxB = Math.max(...agg.departments.map((d) => d.births));
+const placed: { x: number; y: number; r: number; code: number; name: string; rate: number; i: number }[] = [];
+[...agg.departments].sort((a, b) => b.births - a.births).forEach((d) => {
+  const r = 3 + 18 * Math.sqrt(d.births / maxB), x = rx(d.rate);
+  let y = 360;
+  for (let k = 0; k < 400; k++) {
+    const off = Math.ceil(k / 2) * (k % 2 ? -1 : 1) * 1.5;
+    const cand = 360 + off;
+    if (placed.every((o) => Math.hypot(o.x - x, o.y - cand) >= o.r + r + 1.5)) { y = cand; break; }
+  }
+  placed.push({ x, y, r, code: d.code, name: d.name, rate: d.rate, i: 0 });
+});
+placed.sort((a, b) => a.rate - b.rate).forEach((d, i) => (d.i = i));
+const bog = placed.find((d) => d.code === 11)!;
+const low = placed[0];
+const mapTicks = [6, 8, 10, 12, 14, 16];
 
 // 02 the years
 const years = [2017, 2018, 2019, 2020, 2021, 2022].map((y, i) => ({
@@ -48,13 +79,18 @@ for (let i = 0; i < zeroText.length; i += zeroLine) zeroLines.push(zeroText.slic
 
 const ros = rosette(96, 37, 70, 37, 2200);
 ---
-<section id="investigation" class="inv" data-inv aria-labelledby="inv-title">
+<section id="investigation" class="inv" data-inv data-tone="dark" aria-labelledby="inv-title">
   <div class="wrap head">
     <svg class="ros" viewBox="-200 -200 400 400" aria-hidden="true" focusable="false"><path d={ros} /></svg>
     <p class="label kicker">{inv.kicker[locale]}</p>
     <h2 id="inv-title" data-typeset>{inv.title[locale]}</h2>
     <p class="label byline">{inv.byline[locale]}</p>
     <p class="lede">{inv.lede[locale]}</p>
+    <p class="cold">
+      <span class="cn" data-count={agg.cases}>{fmt(agg.cases)}</span>
+      <span class="cc">{inv.cold[locale]}</span>
+    </p>
+    <p class="label coldnote">{inv.coldNote[locale]}</p>
   </div>
 
   <div class="scrolly">
@@ -68,19 +104,19 @@ const ros = rosette(96, 37, 70, 37, 2200);
 
         <!-- 01 the line -->
         <g class="layer" data-on="line">
-          <rect class="lowzone" x={gx(0)} y="170" width={gx(2500) - gx(0)} height="230" fill={`url(#hatch-${locale})`} />
-          <text class="zone-l" x={(gx(0) + gx(2500)) / 2} y="290" text-anchor="middle">{f.low}</text>
-          <text class="zone-r" x={(gx(2500) + gx(5000)) / 2} y="290" text-anchor="middle">{f.ok}</text>
-          <g class="most">
-            <path d={`M${gx(2500) + 4} 380 V372 H${gx(3500) - 4} V380`} />
-            <text x={(gx(2500) + gx(3500)) / 2} y="362" text-anchor="middle">{locale === 'es' ? 'la mayoría' : 'most births'}</text>
-          </g>
-          <line class="axis" x1={gx(0)} y1="400" x2={gx(5000)} y2="400" />
-          {bandTicks.map((g, i) => (
-            <g>
-              <line class="tick" x1={gx(g)} y1="400" x2={gx(g)} y2="408" />
-              <text class:list={['tl', { minor: ![0, 3, 6].includes(i) }]} x={gx(g)} y="428" text-anchor="middle">{f.bands[i]}</text>
+          <rect class="lowzone" x={gx(0)} y="150" width={gx(2500) - gx(0)} height="250" fill={`url(#hatch-${locale})`} />
+          <text class="zone-l" x={(gx(0) + gx(2500)) / 2} y="214" text-anchor="middle">{f.low}</text>
+          <text class="lowbig" x={(gx(0) + gx(2500)) / 2} y="262" text-anchor="middle">{fmt(agg.rate * 100, 1)} %</text>
+          <text class="zone-s" x={(gx(0) + gx(2500)) / 2} y="290" text-anchor="middle">{fmt(agg.cases)} {f.babies}</text>
+          {bars.map((b) => (
+            <g class:list={['bin', { low: b.low }]} style={`--i:${b.i}`}>
+              <rect x={b.x} y={b.y} width={b.w} height={b.h} />
+              <text class="pct" x={b.x + b.w / 2} y={b.y - 8} text-anchor="middle">{b.pct}</text>
             </g>
+          ))}
+          <line class="axis" x1={gx(0)} y1="400" x2={gx(5000)} y2="400" />
+          {bandLabels.map((l, i) => (
+            <text class:list={['tl', { minor: ![0, 4, 7].includes(i) }]} x={40 + i * 65 + 32.5} y="426" text-anchor="middle">{l}</text>
           ))}
           <text class="tl unit" x={gx(5000)} y="452" text-anchor="end">{f.grams}</text>
           <line class="redline grow" x1={gx(2500)} y1="130" x2={gx(2500)} y2="410" />
@@ -150,23 +186,50 @@ const ros = rosette(96, 37, 70, 37, 2200);
           </g>
         </g>
 
-        <!-- 06 what it means -->
+        <!-- 06 the twist: departments -->
+        <g class="layer" data-on="map">
+          <text class="tl maptitle" x="50" y="56">{f.mapT[0]}<tspan x="50" dy="1.4em">{f.mapT[1]}</tspan></text>
+          <path class="ridge" d={`M${bog.x - 124} 318 L${bog.x - 96} 292 L${bog.x - 80} 298 L${bog.x - 56} 254 L${bog.x - 40} 264 L${bog.x - 18} 200 L${bog.x - 8} 208 L${bog.x} 172 L${bog.x + 8} 182 L${bog.x + 24} 196 L${bog.x + 44} 232 L${bog.x + 76} 258`} />
+          <g class="chapel"><rect x={bog.x - 5} y="158" width="10" height="10" /><path d={`M${bog.x - 7} 159 L${bog.x} 151 L${bog.x + 7} 159 Z`} /></g>
+          <text class="tl alt" x={bog.x} y="140" text-anchor="middle">{f.alt}</text>
+          <line class="avg" x1={rx(agg.rate)} y1="230" x2={rx(agg.rate)} y2="466" />
+          <text class="tl avgl" x={rx(agg.rate)} y="220" text-anchor="middle">{f.avg} {fmt(agg.rate * 100, 1)}</text>
+          {placed.map((d) => (
+            <circle class:list={['dep', { high: HIGH.has(d.code), bog: d.code === 11 }]} cx={d.x.toFixed(1)} cy={d.y.toFixed(1)} r={d.r.toFixed(1)} style={`--i:${d.i}`} />
+          ))}
+          <g class="bogl">
+            <text class="ml" x={bog.x + bog.r} y={bog.y + bog.r + 30} text-anchor="end">Bogotá</text>
+            <text class="mz" x={bog.x + bog.r} y={bog.y + bog.r + 56} text-anchor="end">{fmt(bog.rate * 100, 1)}</text>
+          </g>
+          <text class="tl lowl" x={low.x} y={low.y + low.r + 26} text-anchor="middle">{low.name} {fmt(low.rate * 100, 1)}</text>
+          <line class="axis" x1="50" y1="466" x2="560" y2="466" />
+          {mapTicks.map((t) => <text class="tl" x={rx(t / 100)} y="490" text-anchor="middle">{t}</text>)}
+          <text class="tl unit" x="560" y="514" text-anchor="end">{f.per100}</text>
+          <g class="key"><circle cx="58" cy="540" r="6" /><text class="tl" x="72" y="545">{f.andes}</text></g>
+        </g>
+
+        <!-- 07 what it means -->
         <g class="layer" data-on="end">
           <g class="stamp" style="--r:-8deg;--i:0">
-            <rect x="60" y="120" width="250" height="96" />
-            <rect class="in" x="66" y="126" width="238" height="84" />
-            <text class="st" x="185" y="180" text-anchor="middle">{f.sig}</text>
-            <text class="tl" x="185" y="246" text-anchor="middle">{f.sigA}</text>
+            <rect x="40" y="60" width="250" height="96" />
+            <rect class="in" x="46" y="66" width="238" height="84" />
+            <text class="st" x="165" y="120" text-anchor="middle">{f.sig}</text>
+            <text class="tl" x="165" y="186" text-anchor="middle">{f.sigA}</text>
           </g>
           <g class="stamp" style="--r:6deg;--i:1">
-            <rect x="290" y="250" width="250" height="96" />
-            <rect class="in" x="296" y="256" width="238" height="84" />
-            <text class="st" x="415" y="310" text-anchor="middle">{f.sig}</text>
-            <text class="tl" x="415" y="376" text-anchor="middle">{f.sigB}</text>
+            <rect x="310" y="150" width="250" height="96" />
+            <rect class="in" x="316" y="156" width="238" height="84" />
+            <text class="st" x="435" y="210" text-anchor="middle">{f.sig}</text>
+            <text class="tl" x="435" y="276" text-anchor="middle">{f.sigB}</text>
+          </g>
+          <g class="stamp todo" style="--r:-3deg;--i:2">
+            <rect x="70" y="282" width="250" height="96" />
+            <text class="st" x="195" y="342" text-anchor="middle">{f.todo}</text>
+            <text class="tl" x="195" y="408" text-anchor="middle">{f.todoB}</text>
           </g>
           <g class="blind">
-            <rect x="70" y="430" width="460" height="52" />
-            <text class="tl" x="300" y="461" text-anchor="middle">{f.blind}</text>
+            <rect x="70" y="440" width="460" height="52" />
+            <text class="tl" x="300" y="471" text-anchor="middle">{f.blind}</text>
           </g>
         </g>
       </svg>
@@ -201,6 +264,11 @@ const ros = rosette(96, 37, 70, 37, 2200);
   h2 { font-size: var(--step-5); max-width: 15ch; position: relative; }
   .byline { color: var(--soft); margin: 0; }
   .lede { margin: 0; max-width: var(--measure); color: #d4d8cf; position: relative; }
+  .cold { margin: 2.5rem 0 0; display: grid; gap: .6rem; position: relative; border-top: 1px solid var(--line); padding-top: 1.4rem; }
+  .cn { font-family: var(--font-display); font-size: clamp(4.6rem, 2.6rem + 11vw, 12rem); line-height: .82; color: var(--red); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .cc { font-family: var(--font-display); font-size: clamp(1.35rem, 1.1rem + 1.2vw, 2.2rem); line-height: 1.15; max-width: 24ch; color: #f3f2ea; }
+  .coldnote { color: var(--soft); margin: 0; max-width: 80ch; line-height: 1.6; }
+  @media (min-width: 901px) { .cold { grid-template-columns: auto minmax(0, 1fr); align-items: end; column-gap: 2rem; } .cc { padding-bottom: .6rem; } }
 
   /* ---------- scrollytelling: sticky figure, steps scroll over it ---------- */
   .scrolly { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
@@ -213,8 +281,13 @@ const ros = rosette(96, 37, 70, 37, 2200);
   .sk { color: var(--red); }
   h3 { font-size: var(--step-3); font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.3rem); color: #f3f2ea; }
   .note { font-size: var(--step--1); color: var(--soft); border-top: 1px dashed var(--line); padding-top: .6rem; }
-  :global(html.js) .step .card { opacity: .3; transition: opacity .5s; }
-  :global(html.js) .step.is-on .card { opacity: 1; }
+  @media (min-width: 901px) {
+    /* inactive steps dim to a colour that still passes AA (#a9b7ad on #10201a ≈ 8:1), never opacity */
+    :global(html.js) .step .card { transition: border-color .5s; }
+    :global(html.js) .step .card :is(h3, p, .sk) { transition: color .5s; }
+    :global(html.js) .step:not(.is-on) .card { border-top-color: var(--line); }
+    :global(html.js) .step:not(.is-on) .card :is(h3, p, .sk) { color: var(--soft); }
+  }
   .src { color: var(--soft); margin: 2rem auto 0; line-height: 1.7; }
   .src span { color: var(--fg); }
 
@@ -229,6 +302,11 @@ const ros = rosette(96, 37, 70, 37, 2200);
     .ml { font-size: 29px; }
     .mz { font-size: 20px; }
     .stamp .tl { font-size: 20px; }
+    .pct { font-size: 17px; }
+    .zone-s { font-size: 17px; }
+    .lowbig { font-size: 50px; }
+    .maptitle { font-size: 18px; }
+    .alt, .avgl, .lowl, .key .tl { font-size: 18px; }
     .blind .tl { font-size: 16px; }
   }
 
@@ -256,6 +334,26 @@ const ros = rosette(96, 37, 70, 37, 2200);
   .most path { fill: none; stroke: var(--och); stroke-width: 1.5; }
   .most text { font-size: 13px; fill: var(--och); }
   .redline { stroke: var(--red); stroke-width: 2.5; }
+  .bin rect { fill: rgba(233, 232, 223, .82); }
+  .bin.low rect { fill: var(--red); }
+  .pct { font-size: 13px; fill: var(--soft); }
+  .bin.low .pct { fill: #ffb3a5; }
+  .lowbig { font-family: var(--font-display); font-size: 44px; fill: #fff7f2; paint-order: stroke; stroke: var(--bg); stroke-width: 8px; }
+  .zone-s { font-size: 13px; fill: #f6d3cb; paint-order: stroke; stroke: var(--bg); stroke-width: 6px; }
+
+  .maptitle { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+  .ridge { fill: none; stroke: var(--och); stroke-width: 1.5; stroke-linejoin: round; }
+  .chapel rect, .chapel path { fill: var(--och); }
+  .alt { fill: var(--och); }
+  .avg { stroke: var(--soft); stroke-dasharray: 4 5; }
+  .avgl { fill: var(--fg); }
+  .dep { fill: rgba(233, 232, 223, .14); stroke: var(--fg); stroke-width: 1.2; }
+  .dep.high { fill: rgba(226, 97, 76, .55); stroke: var(--red); }
+  .dep.bog { fill: var(--red); }
+  .lowl { fill: var(--fg); }
+  .key circle { fill: rgba(226, 97, 76, .55); stroke: var(--red); }
+  .stamp.todo rect { stroke-dasharray: 8 6; stroke: var(--och); }
+  .stamp.todo .st { fill: var(--och); }
 
   .tile rect { fill: rgba(233, 232, 223, .06); stroke: var(--fg); stroke-width: 1.2; }
   .tile .yr { font-family: var(--font-display); font-size: 40px; fill: #f3f2ea; }
@@ -290,6 +388,7 @@ const ros = rosette(96, 37, 70, 37, 2200);
   [data-state='schema'] [data-on~='schema'],
   [data-state='z4'] [data-on~='z4'],
   [data-state='z32'] [data-on~='z32'],
+  [data-state='map'] [data-on~='map'],
   [data-state='end'] [data-on~='end'] { opacity: 1; transition-delay: .25s; }
 
   .grow { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); transition: transform 1s cubic-bezier(.2, .8, .2, 1) .35s; }
@@ -320,4 +419,17 @@ const ros = rosette(96, 37, 70, 37, 2200);
 
   .stamp { transform-box: fill-box; transform-origin: center; transform: scale(2.4) rotate(calc(var(--r) - 18deg)); opacity: 0; transition: transform .45s cubic-bezier(.3, 1.5, .5, 1), opacity .2s; transition-delay: calc(.35s + var(--i) * .45s); }
   [data-state='end'] .stamp { transform: rotate(var(--r)); opacity: 1; }
+
+  .bin rect { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); transition: transform .7s cubic-bezier(.2, .9, .3, 1); transition-delay: calc(.4s + var(--i) * .07s); }
+  [data-state='line'] .bin rect { transform: none; }
+  .pct, .lowbig, .zone-s { opacity: 0; transition: opacity .4s; }
+  [data-state='line'] .pct { opacity: 1; transition-delay: calc(.9s + var(--i) * .07s); }
+  [data-state='line'] :is(.lowbig, .zone-s) { opacity: 1; transition-delay: 1.5s; }
+
+  .dep { transform-box: fill-box; transform-origin: center; transform: translateY(-60px) scale(.4); opacity: 0; transition: transform .6s cubic-bezier(.3, 1.4, .5, 1), opacity .25s; transition-delay: calc(.3s + var(--i) * .035s); }
+  [data-state='map'] .dep { transform: none; opacity: 1; }
+  .ridge, .chapel, .alt, .bogl { opacity: 0; transition: opacity .8s; }
+  [data-state='map'] :is(.ridge, .chapel, .alt) { opacity: .9; transition-delay: 1.6s; }
+  [data-state='map'] .bogl { opacity: 1; transition-delay: 1.5s; }
+  .dep.bog { transition-duration: .9s, .25s; }
 </style>
