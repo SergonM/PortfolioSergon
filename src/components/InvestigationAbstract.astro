@@ -19,7 +19,7 @@ const fill = (s: string) => s
   .replace('{top}', String(Math.round(tree.metrics.top_fifth_rate * 100)))
   .replace('{bottom}', String(Math.round(tree.metrics.bottom_fifth_rate * 100)));
 const href = `${import.meta.env.BASE_URL}${locale === 'es' ? 'es/' : ''}investigation/`;
-const ros = rosette(96, 37, 70, 37, 2200);
+const ros = rosette(96, 37, 70, 37, 1100);
 ---
 <section id="investigation" class="abs" data-tone="dark" aria-labelledby="abs-title">
   <svg class="ros" viewBox="-200 -200 400 400" aria-hidden="true" focusable="false"><path d={ros} /></svg>

@@ -15,5 +15,5 @@ export default defineConfig({
     locales: ['en', 'es'],
     routing: { prefixDefaultLocale: false },
   },
-  build: { inlineStylesheets: 'auto' },
+  build: { inlineStylesheets: 'always' },
 });
