@@ -100,11 +100,11 @@ const micro = Array.from({ length: 14 }, () => 'SGM · SERIE 0001 · SERIES III 
                 {svg && (
                   <figure class="plate" data-plate data-tone="dark">
                     <div class="plate-in" data-plate-in>
-                      <p class="micro" aria-hidden="true">{micro}</p>
+                      <p class="micro" aria-hidden="true" data-t={micro}></p>
                       <p class="label p-head"><span>{xs.exhibit} {c.id}</span><span aria-hidden="true">{xs.fold} iii·{folio}a</span></p>
                       <Fragment set:html={svg} />
                       <figcaption>{ex.caption[locale]}</figcaption>
-                      <p class="micro" aria-hidden="true">{micro}</p>
+                      <p class="micro" aria-hidden="true" data-t={micro}></p>
                       <span class="shade" aria-hidden="true" data-shade></span>
                     </div>
                   </figure>
@@ -217,6 +217,7 @@ const micro = Array.from({ length: 14 }, () => 'SGM · SERIE 0001 · SERIES III 
   .plate-in { position: relative; height: 100%; background: var(--pl-bg); color: var(--pl-ink); padding: 1rem 1.1rem .9rem; display: flex; flex-direction: column; gap: .5rem;
               transform-origin: 0 50%; backface-visibility: hidden; box-shadow: inset 0 0 0 1px rgba(212,165,74,.35), inset 0 0 0 6px var(--pl-bg), inset 0 0 0 7px rgba(212,165,74,.18); overflow: hidden; }
   .micro { margin: 0; font-size: 5px; line-height: 1; letter-spacing: .25em; white-space: nowrap; overflow: hidden; color: rgba(212,165,74,.55); }
+  .micro::before { content: attr(data-t); } /* microprint is ornament: drawn by CSS so it is not read or audited as text */
   .p-head { margin: 0; display: flex; justify-content: space-between; gap: 1rem; color: var(--pl-ochre); }
   .p-head span + span { color: var(--pl-soft); }
   .plate figcaption { font-family: var(--font-display); font-size: clamp(1rem, .7rem + .8vw, 1.25rem); line-height: 1.25; color: #f3f2ea; margin-top: auto; }
@@ -321,7 +322,7 @@ const micro = Array.from({ length: 14 }, () => 'SGM · SERIE 0001 · SERIES III 
     .steps { order: 3; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
     .c-folio { order: 4; position: static; padding: 0 1.25rem 1rem; text-align: right; }
     .embargo .spread { display: grid; grid-template-columns: minmax(0, 1fr); width: 88vw; }
-    .divider { min-height: 0; aspect-ratio: auto; padding-top: 5rem; }
+    .divider { min-height: 0; aspect-ratio: auto; padding-top: 5rem; align-self: start; }
   }
 
   /* embargo */

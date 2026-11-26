@@ -1,0 +1,9 @@
+---
+import Base from '../../../layouts/Base.astro';
+import InvestigationPage from '../../../components/InvestigationPage.astro';
+import { abstract } from '../../../data/investigation';
+const A = abstract.es;
+---
+<Base locale="es" slug="investigation/" title={A.pageTitle} description={A.pageDescription} entries={['investigation', 'simulator', 'brief']}>
+  <InvestigationPage locale="es" />
+</Base>

@@ -1,27 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
-import Hero from '../components/Hero.astro';
-import Contents from '../components/Contents.astro';
-import Letter from '../components/Letter.astro';
-import Highlights from '../components/Highlights.astro';
-import Investigation from '../components/Investigation.astro';
-import Simulator from '../components/Simulator.astro';
-import Analyst from '../components/Analyst.astro';
-import Auditor from '../components/Auditor.astro';
-import Segments from '../components/Segments.astro';
-import Footer from '../components/Footer.astro';
+import Report from '../components/Report.astro';
 ---
-<Base locale="en">
-  <Hero locale="en" />
-  <main id="main">
-    <Contents locale="en" />
-    <Letter locale="en" />
-    <Highlights locale="en" />
-    <Segments locale="en" />
-    <Investigation locale="en" />
-    <Simulator locale="en" />
-    <Auditor locale="en" />
-    <Analyst locale="en" />
-  </main>
-  <Footer locale="en" />
+<Base locale="en" entries={['contents', 'letter', 'highlights', 'segments', 'investigation', 'risk-factors', 'auditor', 'investor-relations']}>
+  <Report locale="en" />
 </Base>

@@ -32,7 +32,7 @@ function opening() {
   document.documentElement.classList.remove('motion-pending');
 
   const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-  tl.from(doc, { yPercent: 8, rotation: -3, opacity: 0, duration: 1.3 })
+  tl.from(doc, { yPercent: 8, rotation: -3, duration: 1.3 })
     .from(crops, { opacity: 0, scale: 1.8, duration: 0.6, ease: 'power3.out', stagger: 0.05 }, 0.3)
     .fromTo(regs,
       { opacity: 0.9, x: (i) => (i ? 16 : -20), y: (i) => (i ? -9 : 11), rotation: (i) => (i ? 0.7 : -0.9) },

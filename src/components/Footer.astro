@@ -1,10 +1,10 @@
 ---
 import { strings, type Locale } from '../i18n/strings';
-interface Props { locale: Locale }
-const { locale } = Astro.props;
+interface Props { locale: Locale; slug?: string }
+const { locale, slug = '' } = Astro.props;
 const t = strings[locale];
 const base = import.meta.env.BASE_URL;
-const other = locale === 'en' ? `${base}es/` : base;
+const other = locale === 'en' ? `${base}es/${slug}` : `${base}${slug}`;
 ---
 <footer class="wrap foot label">
   <span>{t.reportedFrom}</span>

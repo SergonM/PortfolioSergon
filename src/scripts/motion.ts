@@ -26,20 +26,27 @@ export function initMotion() {
 
   initFrontMotion();
   document.documentElement.classList.remove('motion-pending');
-  typesetHeadings();
-  reveals();
-  segmentsMotion(lenis);
+  // The cover runs first; the rest of the choreography is set up in small slices so no single
+  // task blocks a mid-range phone for long (each slice yields back to the browser).
+  void (async () => {
+    for (const el of gsap.utils.toArray<HTMLElement>('[data-typeset]')) { await slice(); typeset(el); }
+    await slice(); reveals();
+    await slice(); segmentsMotion(lenis);
+    await slice(); ScrollTrigger.refresh();
+  })();
 }
 
+const slice = () => new Promise<void>((r) => ('scheduler' in window && 'yield' in (window as any).scheduler
+  ? (window as any).scheduler.yield().then(r)
+  : setTimeout(r, 0)));
+
 /** Headlines set like movable type: letters drop into the line in a scrambled order, then settle. */
-function typesetHeadings() {
-  gsap.utils.toArray<HTMLElement>('[data-typeset]').forEach((el) => {
-    const s = SplitText.create(el, { type: 'chars,words', mask: 'chars' });
-    gsap.from(s.chars, {
-      yPercent: -110, rotation: () => gsap.utils.random(-25, 25), duration: 0.7, ease: 'back.out(1.6)',
-      stagger: { each: 0.035, from: 'random' },
-      scrollTrigger: { trigger: el, start: 'top 85%', once: true },
-    });
+function typeset(el: HTMLElement) {
+  const s = SplitText.create(el, { type: 'chars,words', mask: 'chars' });
+  gsap.from(s.chars, {
+    yPercent: -110, rotation: () => gsap.utils.random(-25, 25), duration: 0.7, ease: 'back.out(1.6)',
+    stagger: { each: 0.035, from: 'random' },
+    scrollTrigger: { trigger: el, start: 'top 85%', once: true },
   });
 }
 

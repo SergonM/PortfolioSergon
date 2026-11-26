@@ -15,7 +15,7 @@ export default defineConfig({
     locales: ['en', 'es'],
     routing: { prefixDefaultLocale: false },
   },
-  build: { inlineStylesheets: 'auto' },
+  build: { inlineStylesheets: 'always' },
   // Content Security Policy, emitted as a <meta> tag (GitHub Pages cannot send headers).
   // Astro hashes every script and stylesheet it renders, so nothing else can run.
   // style-src-attr stays open: the drawings and GSAP need inline style attributes, and styles cannot run code.
