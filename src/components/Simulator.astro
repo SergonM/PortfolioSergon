@@ -1,5 +1,7 @@
 ---
 import type { Locale } from '../i18n/strings';
+import { walk, layout, per100, type TreeModel } from '../lib/tree';
+import Brief from './inv/Brief.astro';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
@@ -11,33 +13,63 @@ const model = Object.values(found)[0] as any;
 const T = {
   en: {
     kicker: 'Try it yourself', title: 'What if…?',
-    lede: 'Pick a mother’s situation. The tree finds the group of real births that matches it and tells you how many of those babies were born under 2,500 grams.',
+    lede: 'Pick a mother’s situation. The tree finds the group of real births that matches it and tells you how many of those babies were born under 2,500 grams. Then it shows its work.',
     form: 'Birth certificate · simulation', of100: 'of every 100 babies', inGroup: 'born under 2,500 g in this group',
-    national: 'Country average', path: 'What the tree looked at', births: 'births in this group',
+    national: 'Country average', births: 'births in this group',
     fields: { age: 'Mother’s age', edu: 'Mother’s schooling', visits: 'Prenatal check-ups', insurance: 'Health insurance', area: 'Where she lives', multiple: 'Babies', children: 'This child is her…' },
     honest: (m: any) => `In the births it never saw, the riskiest fifth of groups had ${Math.round(m.metrics.top_fifth_rate * 100)} underweight babies per 100 and the safest fifth ${Math.round(m.metrics.bottom_fifth_rate * 100)}. This describes groups, it doesn’t predict a person. Trained on ${m.births.toLocaleString('en-US')} DANE births from ${m.years.join(', ')}; it ranks groups better than chance (AUC ${m.metrics.auc.toFixed(2)}, where 0.5 is a coin toss and 1 is perfect). Gestation weeks are left out on purpose: they explain most cases but nobody chooses them. Every group holds at least ${m.params.min_samples_leaf.toLocaleString('en-US')} births.`,
     reset: 'Reset',
+    why: 'Why that number', start: 'Every birth in the country', end: 'This group', per: 'per 100',
+    mover: 'What moved this case most', skipped: 'Never needed to ask', none: 'nothing: it asked everything',
+    treeCap: (q: number, g: number) => `The whole tree: ${q} questions, ${g} groups, each a number per 100 births. Your path is lit.`,
     drivers: 'What weighed most in the tree', small: 'Schooling and city vs countryside barely move it once the rest is known. The tests above prove those gaps exist; the tree shows they are small next to twins or missing check-ups.',
   },
   es: {
     kicker: 'Pruébalo tú', title: '¿Y si…?',
-    lede: 'Elige la situación de una madre. El árbol encuentra el grupo de nacimientos reales que se parece y te dice cuántos de esos bebés nacieron con menos de 2.500 gramos.',
+    lede: 'Elige la situación de una madre. El árbol encuentra el grupo de nacimientos reales que se parece y te dice cuántos de esos bebés nacieron con menos de 2.500 gramos. Después muestra sus cuentas.',
     form: 'Certificado de nacido vivo · simulación', of100: 'de cada 100 bebés', inGroup: 'nacieron con menos de 2.500 g en este grupo',
-    national: 'Promedio del país', path: 'Lo que miró el árbol', births: 'nacimientos en este grupo',
+    national: 'Promedio del país', births: 'nacimientos en este grupo',
     fields: { age: 'Edad de la madre', edu: 'Estudios de la madre', visits: 'Controles prenatales', insurance: 'Afiliación a salud', area: 'Dónde vive', multiple: 'Bebés', children: 'Este hijo es su…' },
     honest: (m: any) => `En los nacimientos que nunca vio, el quinto de grupos con más riesgo tuvo ${Math.round(m.metrics.top_fifth_rate * 100)} bebés con bajo peso por cada 100, y el de menos riesgo ${Math.round(m.metrics.bottom_fifth_rate * 100)}. Esto describe grupos, no predice a una persona. Entrenado con ${m.births.toLocaleString('es-CO')} nacimientos del DANE de ${m.years.join(', ')}; el árbol ordena los grupos mejor que el azar (AUC ${m.metrics.auc.toFixed(2).replace('.', ',')}, donde 0,5 es lanzar una moneda y 1 es perfecto). Las semanas de gestación quedan fuera a propósito: explican la mayoría de casos pero nadie las elige. Cada grupo tiene al menos ${m.params.min_samples_leaf.toLocaleString('es-CO')} nacimientos.`,
     reset: 'Reiniciar',
+    why: 'Por qué ese número', start: 'Todos los nacimientos del país', end: 'Este grupo', per: 'por cada 100',
+    mover: 'Lo que más movió este caso', skipped: 'No necesitó preguntar', none: 'nada: preguntó todo',
+    treeCap: (q: number, g: number) => `El árbol completo: ${q} preguntas, ${g} grupos, cada uno con su número por cada 100 nacimientos. Tu camino va encendido.`,
     drivers: 'Lo que más pesó en el árbol', small: 'Los estudios y la zona casi no la mueven cuando ya se sabe lo demás. Las pruebas de arriba demuestran que esas diferencias existen; el árbol muestra que son pequeñas frente a un embarazo de gemelos o la falta de controles.',
   },
 }[locale];
 
-// Default scenario: the most common answer for each field is not known here, so start mid-scale.
+// Default scenario: mid-scale answers, one baby, first child.
 const defaults: Record<string, number> = { age: 2, edu: 2, visits: 3, insurance: 0, area: 0, multiple: 0, children: 0 };
 const base = model ? Math.round(model.base_rate * 100) : 0;
-const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.nodes, features: model.features.map((f: any) => ({ key: f.key, kind: f.kind, labels: f.labels[locale] })), labels: T.fields, base: model.base_rate, locale }) : '';
+const nf = (n: number) => n.toLocaleString(locale === 'es' ? 'es-CO' : 'en-US');
+const label = (key: string) => (T.fields as any)[key] as string;
+const answer = (key: string, k: number) => model.features.find((f: any) => f.key === key).labels[locale][k] as string;
+
+// first render: the default scenario, already explained, so the ledger reads without JS
+const first = model ? walk(model as TreeModel, defaults) : null;
+const firstN = first ? Math.round(first.leaf.rate * 100) : base;
+const scaleMax = (w: NonNullable<typeof first>) => Math.max(...w.turns.flatMap((t) => [t.from, t.to])) * 1.08;
+const mover = first ? first.turns.reduce((a, b) => (Math.abs(b.to - b.from) > Math.abs(a.to - a.from) ? b : a)) : null;
+const delta = (t: { from: number; to: number }) => {
+  const d = (t.to - t.from) * 100;
+  return `${d >= 0 ? '+' : '−'}${Math.abs(d).toLocaleString(locale === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}`;
+};
+
+// the whole tree, drawn small
+const TW = 360, TH = 150;
+const pos = model ? layout(model as TreeModel, TW, TH, 12) : [];
+const edges = model ? (model.nodes as any[]).flatMap((n, i) => (n.leaf ? [] : [n.left, n.right].map((c: number) => ({ p: i, c })))) : [];
+const lit = new Set(first?.nodes ?? []);
+
+const payload = model ? JSON.stringify({
+  columns: model.columns, nodes: model.nodes, locale,
+  features: model.features.map((f: any) => ({ key: f.key, labels: f.labels[locale] })),
+  labels: T.fields, t: { start: T.start, end: T.end, per: T.per, births: T.births, none: T.none },
+}) : '';
 ---
-{model && (
-<section class="sim" id="simulator" data-sim aria-labelledby="sim-title">
+{model && first && (
+<section class="sim" id="simulator" data-sim data-tone="dark" aria-labelledby="sim-title">
   <div class="wrap grid">
     <header class="head">
       <p class="label kicker">{T.kicker}</p>
@@ -49,7 +81,7 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
       <p class="label ftitle">{T.form}</p>
       {model.features.map((f: any) => (
         <fieldset>
-          <legend class="label">{(T.fields as any)[f.key]}</legend>
+          <legend class="label">{label(f.key)}</legend>
           <div class="chips">
             {f.labels[locale].map((l: string, k: number) => (
               <label><input type="radio" name={f.key} value={k} checked={k === (defaults[f.key] ?? 0)} /><span>{l}</span></label>
@@ -58,19 +90,50 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
         </fieldset>
       ))}
       <button type="reset" class="label reset">{T.reset}</button>
-      <p class="peek" aria-hidden="true"><b data-sim-peek>{base}</b> {T.of100}</p>
+      <p class="peek" aria-hidden="true"><b data-sim-peek>{firstN}</b> {T.of100}</p>
     </form>
 
-    <div class="result" aria-live="polite">
-      <p class="big"><span data-sim-n>{base}</span></p>
-      <p class="of">{T.of100}<br /><span>{T.inGroup}</span></p>
-      <div class="dots" aria-hidden="true" data-sim-dots>
-        {Array.from({ length: 100 }, (_, i) => <i style={`--i:${i}`} class:list={{ on: i < base }} />)}
+    <div class="result">
+      <div aria-live="polite" aria-atomic="true" class="readout">
+        <p class="big"><span data-sim-n>{firstN}</span></p>
+        <p class="of">{T.of100}<br /><span>{T.inGroup}</span></p>
       </div>
-      <p class="label nat">{T.national}: <strong>{base}</strong> / 100 · <span data-sim-births></span> {T.births}</p>
-      <div class="path">
-        <p class="label">{T.path}</p>
-        <ol data-sim-path></ol>
+      <div class="dots" aria-hidden="true" data-sim-dots>
+        {Array.from({ length: 100 }, (_, i) => <i style={`--i:${i}`} class:list={{ on: i < firstN }} />)}
+      </div>
+      <p class="label nat">{T.national}: <strong>{base}</strong> / 100 · <span data-sim-births>{nf(first.leaf.n ?? 0)}</span> {T.births}</p>
+
+      <div class="why" data-no-chrome>
+        <p class="label wl">{T.why}</p>
+        <ol class="trail" data-sim-trail>
+          <li class="t0"><span class="q">{T.start}</span><span class="bar"><i style={`--s:${(first.turns[0].from / scaleMax(first)).toFixed(3)}`}></i></span><span class="v">{per100(first.turns[0].from, locale)}</span><span class="dl"></span></li>
+          {first.turns.map((t, k) => (
+            <li style={`--k:${k + 1}`}>
+              <span class="q">{label(t.key)}: <b>{answer(t.key, defaults[t.key])}</b></span>
+              <span class="bar"><i style={`--s:${(t.to / scaleMax(first)).toFixed(3)}`}></i></span>
+              <span class="v">{per100(t.to, locale)}</span>
+              <span class:list={['dl', t.to >= t.from ? 'up' : 'down']}>{delta(t)}</span>
+            </li>
+          ))}
+          <li class="tn" style={`--k:${first.turns.length + 1}`}><span class="q">= {nf(first.leaf.n ?? 0)} {T.births}</span><span class="v">{per100(first.leaf.rate, locale)}</span><span class="dl">{T.per}</span></li>
+        </ol>
+        <p class="verdict" data-sim-verdict>
+          <span>{T.mover}: <b>{label(mover!.key)}</b> ({delta(mover!)})</span>
+          <span>{T.skipped}: <b>{model.features.map((f: any) => f.key).filter((k: string) => !first.asked.includes(k)).map(label).join(', ') || T.none}</b></span>
+        </p>
+
+        <figure class="mini" aria-hidden="true">
+          <svg viewBox={`0 0 ${TW} ${TH + 30}`} data-sim-tree focusable="false">
+            {edges.map((e) => <line class:list={['e', { on: lit.has(e.c) }]} data-c={e.c} x1={pos[e.p].x.toFixed(1)} y1={pos[e.p].y.toFixed(1)} x2={pos[e.c].x.toFixed(1)} y2={pos[e.c].y.toFixed(1)} style={`--d:${pos[e.c].d}`} />)}
+            {(model.nodes as any[]).map((n, i) => (
+              <g class:list={['n', { leaf: n.leaf, on: lit.has(i) }]} data-n={i} style={`--d:${pos[i].d};--x:${pos[i].x.toFixed(1)}px;--y:${pos[i].y.toFixed(1)}px`}>
+                <circle cx={pos[i].x.toFixed(1)} cy={pos[i].y.toFixed(1)} r={n.leaf ? 4.2 : 3} />
+                {n.leaf && <text x={pos[i].x.toFixed(1)} y={TH + 18} text-anchor="middle">{Math.round(n.rate * 100)}</text>}
+              </g>
+            ))}
+          </svg>
+          <figcaption class="label">{T.treeCap(model.nodes.filter((n: any) => !n.leaf).length, model.nodes.filter((n: any) => n.leaf).length)}</figcaption>
+        </figure>
       </div>
     </div>
 
@@ -78,7 +141,7 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
       <p class="label">{T.drivers}</p>
       <ol>
         {model.importance.filter((d: any) => d.share >= 0.01).map((d: any) => (
-          <li><span class="bar" style={`--w:${Math.max(4, Math.round(d.share * 100))}%`}></span><span class="nm">{(T.fields as any)[d.feature]}</span><span class="pc">{Math.round(d.share * 100)}%</span></li>
+          <li><span class="bar"><i style={`--w:${Math.max(0.04, d.share).toFixed(3)}`}></i></span><span class="nm">{label(d.feature)}</span><span class="pc">{Math.round(d.share * 100)}%</span></li>
         ))}
       </ol>
       <p class="small">{T.small}</p>
@@ -89,16 +152,17 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
   <script type="application/json" data-sim-model set:html={payload} />
 </section>
 )}
+<Brief locale={locale} />
 
 <style>
-  .sim { --bg: #10201a; --fg: #e9e8df; --soft: #a9b7ad; --red: #e2614c; background: var(--bg); color: var(--fg); padding-block: 2rem 6rem; }
+  .sim { --bg: #10201a; --fg: #e9e8df; --soft: #a9b7ad; --red: #e2614c; background: var(--bg); color: var(--fg); padding-block: 2rem 5rem; }
   .grid { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1fr); }
   .head { display: grid; gap: .8rem; }
   .kicker { color: var(--red); margin: 0; }
   h2 { font-size: var(--step-5); color: #f3f2ea; }
   .lede { margin: 0; max-width: var(--measure); color: #d4d8cf; }
 
-  .cert { background: var(--paper); color: var(--ink); padding: 1.25rem; display: grid; gap: 1rem; position: relative;
+  .cert { background: var(--paper); color: var(--ink); padding: 1.25rem; display: grid; gap: 1rem; position: relative; align-self: start;
           border: 1px solid var(--ink); outline: 1px solid var(--ink); outline-offset: -7px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.7); }
   .ftitle { color: var(--seal); margin: 0; }
   fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: .7rem 0 0; display: grid; gap: .5rem; }
@@ -106,31 +170,71 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
   .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
   .chips label { position: relative; }
   .chips input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
-  .chips span { display: inline-block; padding: .4rem .7rem; border: 1px solid var(--ink); font-size: .86rem; line-height: 1.2; transition: background .2s, color .2s; }
+  .chips span { display: inline-block; padding: .45rem .7rem; border: 1px solid var(--ink); font-size: .86rem; line-height: 1.2; transition: background .2s, color .2s; }
   .chips input:checked + span { background: var(--ink); color: var(--paper); }
   .chips input:focus-visible + span { outline: 2px solid var(--seal); outline-offset: 2px; }
   .reset { justify-self: start; background: none; border: 0; border-bottom: 1px solid var(--seal); color: var(--seal); padding: .2rem 0; cursor: pointer; font-family: inherit; }
 
   .result { display: grid; gap: .9rem; align-content: start; }
-  .big { margin: 0; font-family: var(--font-display); font-size: clamp(6rem, 4rem + 10vw, 11rem); line-height: .85; color: var(--red); }
+  .readout p { margin: 0; }
+  .big { font-family: var(--font-display); font-size: clamp(6rem, 4rem + 10vw, 11rem); line-height: .85; color: var(--red); }
   .big span { display: inline-block; }
-  .of { margin: 0; font-family: var(--font-display); font-size: var(--step-1); color: #f3f2ea; }
+  .of { font-family: var(--font-display); font-size: var(--step-1); color: #f3f2ea; margin-top: .6rem !important; }
   .of span { font-family: var(--font-mono); font-size: var(--step--1); color: var(--soft); }
   .dots { display: grid; grid-template-columns: repeat(20, 1fr); gap: 5px; max-width: 420px; }
-  .dots i { aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(233, 232, 223, .35); transition: background .3s, border-color .3s, transform .3s; transition-delay: calc(var(--i) * 6ms); }
-  .dots i.on { background: var(--red); border-color: var(--red); }
+  .dots i { aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(233, 232, 223, .35); position: relative; }
+  .dots i::after { content: ''; position: absolute; inset: -1px; border-radius: 50%; background: var(--red); transform: scale(0); transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); transition-delay: calc(var(--i) * 5ms); }
+  .dots i.on::after { transform: none; }
   .nat { color: var(--soft); margin: 0; }
   .nat strong { color: var(--fg); font-weight: 400; }
-  .path p { margin: 0 0 .4rem; color: var(--soft); }
-  .path ol { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .3rem .5rem; align-items: center; }
-  .path :global(li) { font-size: .86rem; border: 1px solid rgba(233, 232, 223, .3); padding: .25rem .55rem; }
-  .path :global(li + li)::before { content: '→'; margin: 0 .5rem 0 -.25rem; color: var(--red); }
+
+  /* ---------- the explanation: a running ledger, then the tree with the path lit ---------- */
+  .why { border-top: 1px solid rgba(233, 232, 223, .25); padding-top: 1rem; display: grid; gap: .8rem; }
+  .why p { margin: 0; }
+  .wl { color: var(--red); }
+  :global(.sim .trail) { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; font-size: .86rem; }
+  :global(.sim .trail li) { display: grid; grid-template-columns: minmax(0, 1fr) 3.4rem 3.6rem; grid-template-areas: 'q v dl' 'bar bar bar'; column-gap: .6rem; row-gap: .3rem; padding: .55rem 0; border-bottom: 1px dashed rgba(233, 232, 223, .18); align-items: baseline; }
+  :global(.sim .trail .q) { grid-area: q; color: #d4d8cf; }
+  :global(.sim .trail .q b) { color: #f3f2ea; font-weight: 400; }
+  :global(.sim .trail .v) { grid-area: v; text-align: right; font-family: var(--font-display); font-size: 1.35rem; line-height: 1; color: #f3f2ea; }
+  :global(.sim .trail .dl) { grid-area: dl; text-align: right; color: var(--soft); font-size: .8rem; }
+  :global(.sim .trail .dl.up) { color: #ff9b86; }
+  :global(.sim .trail .dl.down) { color: #9fd4b4; }
+  :global(.sim .trail .bar) { grid-area: bar; height: 6px; background: rgba(233, 232, 223, .08); overflow: hidden; }
+  :global(.sim .trail .bar i) { display: block; height: 100%; background: var(--fg); opacity: .5; transform-origin: 0 50%; transform: scaleX(var(--s)); transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+  :global(.sim .trail .t0 .q) { color: var(--soft); }
+  :global(.sim .trail .tn) { border-bottom: 0; border-top: 2px solid var(--red); grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'q v' 'q dl'; }
+  :global(.sim .trail .tn .dl) { white-space: nowrap; }
+  :global(.sim .trail .tn .q), :global(.sim .trail .tn .v) { color: var(--red); }
+  :global(.sim .trail .tn .v) { font-size: 1.8rem; }
+  :global(html.js .sim .trail.play li) { animation: row-in .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--k, 0) * 110ms); }
+  @keyframes row-in { from { opacity: 0; transform: translateX(-14px); } }
+  .verdict { display: grid; gap: .3rem; font-size: .86rem; color: var(--soft); }
+  .verdict b { color: #f3f2ea; font-weight: 400; }
+
+  .mini { margin: .4rem 0 0; display: grid; gap: .4rem; }
+  .mini svg { width: 100%; max-width: 520px; height: auto; overflow: visible; }
+  .mini .e { stroke: rgba(233, 232, 223, .22); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .mini .n circle { fill: var(--bg); stroke: rgba(233, 232, 223, .45); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .mini .n text { font-family: var(--font-mono); font-size: 9px; fill: var(--soft); }
+  .mini .e.on { stroke: var(--red); stroke-width: 2.5; }
+  .mini .n.on circle { fill: var(--red); stroke: var(--red); }
+  .mini .n.leaf.on text { fill: #ff9b86; font-size: 12px; }
+  .mini figcaption { color: var(--soft); }
+  /* lit path is a second coat of paint: opacity only, delayed by depth so it runs top to bottom */
+  :global(html.js) .mini .e { transition: opacity .3s; }
+  :global(html.js) .mini.play .e.on { animation: lit .35s ease both; animation-delay: calc(var(--d) * 110ms + 120ms); }
+  :global(html.js) .mini.play .n.on circle { animation: pop .4s cubic-bezier(.3, 1.8, .5, 1) both; animation-delay: calc(var(--d) * 110ms + 160ms); transform-box: fill-box; transform-origin: center; }
+  @keyframes lit { from { opacity: 0; } }
+  @keyframes pop { from { transform: scale(0); } }
+
   .drivers { display: grid; gap: .6rem; }
   .drivers p { margin: 0; }
   .drivers .label { color: var(--soft); }
   .drivers ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; max-width: 640px; }
   .drivers li { display: grid; grid-template-columns: 12rem minmax(0, 1fr) 3.5rem; align-items: center; gap: .8rem; font-size: .9rem; }
-  .drivers .bar { grid-column: 2; grid-row: 1; height: 10px; width: var(--w); background: var(--red); }
+  .drivers .bar { grid-column: 2; grid-row: 1; height: 10px; }
+  .drivers .bar i { display: block; height: 100%; background: var(--red); transform-origin: 0 50%; transform: scaleX(var(--w)); }
   .drivers .nm { grid-column: 1; grid-row: 1; }
   .drivers .pc { color: var(--soft); text-align: right; }
   .drivers .small { color: #d4d8cf; max-width: 64ch; }
@@ -143,8 +247,8 @@ const payload = model ? JSON.stringify({ columns: model.columns, nodes: model.no
 
   @media (min-width: 901px) {
     .peek { display: none; }
-    .grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); column-gap: 3rem; }
+    .grid { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); column-gap: 3rem; }
     .head, .honest, .drivers { grid-column: 1 / -1; }
-    .result { position: sticky; top: 2rem; }
+    .result { position: sticky; top: 1.5rem; }
   }
 </style>

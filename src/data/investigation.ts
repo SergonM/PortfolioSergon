@@ -7,7 +7,7 @@ import type { Locale } from '../i18n/strings';
  */
 type L = Record<Locale, string>;
 
-export type InvState = 'line' | 'years' | 'schema' | 'z4' | 'z32' | 'end';
+export type InvState = 'line' | 'years' | 'schema' | 'z4' | 'z32' | 'map' | 'end';
 
 export interface InvStep { state: InvState; kicker: L; title: L; body: L; note?: L }
 
@@ -18,6 +18,14 @@ export const inv = {
   lede: {
     en: 'Low birth weight is one of the earliest warning signs a newborn can carry. With two classmates, I went through four years of Colombian birth records to see who is most exposed and why.',
     es: 'El bajo peso al nacer es una de las primeras señales de alerta que puede traer un recién nacido. Con dos compañeros revisé cuatro años de registros de nacimientos en Colombia para ver quién está más expuesto y por qué.',
+  },
+  cold: {
+    en: 'babies were born under 2,500 grams in Colombia in 2022 alone. One in ten.',
+    es: 'bebés nacieron con menos de 2.500 gramos en Colombia solo en 2022. Uno de cada diez.',
+  },
+  coldNote: {
+    en: 'DANE 2022, births with a known weight. Sections 06 and the memo are my own 2022 re-analysis for this site; the rest is the 2024 report.',
+    es: 'DANE 2022, nacimientos con peso conocido. El paso 06 y el memorando son un reanálisis propio de 2022 para este sitio; lo demás es el informe de 2024.',
   },
   source: {
     en: 'Source: DANE, Estadísticas Vitales (births), 2017, 2018, 2021 and 2022. Analysis: project report “Análisis de factores que impactan la salud neonatal en Colombia”, Uniandes, 2024.',
@@ -34,6 +42,7 @@ export const steps: InvStep[] = [
       en: 'That is the medical definition of low birth weight, and one of the strongest early signals of illness or death around birth. DANE records every birth in weight bands, from under 1,000 grams to over 4,000. Most Colombian babies land between 2,500 and 3,499.',
       es: 'Esa es la definición médica de bajo peso al nacer, y una de las señales tempranas más fuertes de enfermedad o muerte alrededor del parto. El DANE registra cada nacimiento por rangos de peso, desde menos de 1.000 gramos hasta más de 4.000. La mayoría de bebés en Colombia cae entre 2.500 y 3.499.',
     },
+    note: { en: 'Bars: every 2022 birth with a known weight, by DANE weight band.', es: 'Barras: todos los nacimientos de 2022 con peso conocido, por rango de peso del DANE.' },
   },
   {
     state: 'years',
@@ -75,12 +84,25 @@ export const steps: InvStep[] = [
     note: { en: 'Urban vs rural: Z = 31.86, p = 8.7 × 10⁻²²³. With this many records even small gaps become significant, so the size of the gap is a separate question.', es: 'Urbano vs rural: Z = 31,86, p = 8,7 × 10⁻²²³. Con tantos registros hasta una diferencia pequeña sale significativa; qué tan grande es, es otra pregunta.' },
   },
   {
+    state: 'map',
+    kicker: { en: '06 · The twist', es: '06 · El giro' },
+    title: { en: 'The highest rate isn’t in the countryside. It’s Bogotá.', es: 'El registro más alto no está en el campo. Está en Bogotá.' },
+    body: {
+      en: 'I went back to the 2022 records to see where it hits hardest. Of every 100 babies whose mothers live in Bogotá, 15 were born under 2,500 grams; in Caquetá, 6. The four highest are all up in the Andes: Bogotá, Cundinamarca, Nariño and Boyacá. Medical studies link altitude to lighter babies, and altitude is not in any DANE record.',
+      es: 'Volví a los registros de 2022 para ver dónde pega más. De cada 100 bebés de madres que viven en Bogotá, 15 nacieron con menos de 2.500 gramos; en Caquetá, 6. Los cuatro más altos están en los Andes: Bogotá, Cundinamarca, Nariño y Boyacá. Los estudios médicos asocian la altura con bebés más livianos, y la altura no está en ningún registro del DANE.',
+    },
+    note: {
+      en: 'DANE 2022, by the mother’s department of residence. Take Bogotá out and towns drop from 10.7 to 9.8 per 100, below the dispersed rural area (10.4): the city’s lead was mostly Bogotá. Own re-analysis, not part of the 2024 report.',
+      es: 'DANE 2022, por departamento de residencia de la madre. Sin Bogotá, las cabeceras bajan de 10,7 a 9,8 por cada 100, por debajo del rural disperso (10,4): la ventaja de la ciudad era sobre todo Bogotá. Reanálisis propio, no hace parte del informe de 2024.',
+    },
+  },
+  {
     state: 'end',
-    kicker: { en: '06 · What it means', es: '06 · Qué significa' },
+    kicker: { en: '07 · What it means', es: '07 · Qué significa' },
     title: { en: 'Two levers outside the hospital: school and distance.', es: 'Dos palancas fuera del hospital: el colegio y la distancia.' },
     body: {
-      en: 'Teenage mothers and older mothers also had more underweight babies than young adults. The report closes with two recommendations: invest in mothers’ education and bring prenatal care closer to rural areas. What the records can’t show is just as important: nutrition and the mother’s illnesses are not in the data.',
-      es: 'Las madres adolescentes y las de más edad también tuvieron más bebés con bajo peso que las adultas jóvenes. El informe cierra con dos recomendaciones: invertir en la educación de las madres y acercar el control prenatal a las zonas rurales. Lo que los registros no muestran importa igual: la nutrición y las enfermedades de la madre no están en los datos.',
+      en: 'Teenage mothers and older mothers also had more underweight babies than young adults. The 2024 report closed with two recommendations: invest in mothers’ education and bring prenatal care closer to rural areas. With the 2022 numbers I’d add a third: study altitude, starting with Bogotá. What the records can’t show matters just as much: nutrition and the mother’s illnesses are not in the data.',
+      es: 'Las madres adolescentes y las de más edad también tuvieron más bebés con bajo peso que las adultas jóvenes. El informe de 2024 cerró con dos recomendaciones: invertir en la educación de las madres y acercar el control prenatal a las zonas rurales. Con los números de 2022 agrego una tercera: estudiar la altura, empezando por Bogotá. Lo que los registros no muestran importa igual: la nutrición y las enfermedades de la madre no están en los datos.',
     },
   },
 ];
@@ -95,6 +117,8 @@ export const fig = {
     chance: 'What chance looks like', bar: 'usual bar', edu: 'Mother’s schooling', area: 'City or countryside',
     zeros: 'p = 0.', zerosTail: '869…',
     sig: 'Not chance', sigA: 'Mother’s schooling', sigB: 'City or countryside', blind: 'Not in the data: nutrition, illness',
+    babies: 'babies', ofAll: 'of all births', mapT: ['Born under 2,500 g, of every 100', 'by department of residence · 2022'], avg: 'country', per100: 'of every 100',
+    andes: 'Andean highlands', alt: '2,600 m', todo: 'To study', todoB: 'Altitude · Bogotá',
   },
   es: {
     grams: 'gramos', low: 'Bajo peso al nacer', ok: 'Rango esperado', line: '2.500 g',
@@ -104,5 +128,7 @@ export const fig = {
     chance: 'Así se ve el azar', bar: 'umbral usual', edu: 'Estudios de la madre', area: 'Ciudad o campo',
     zeros: 'p = 0,', zerosTail: '869…',
     sig: 'No es azar', sigA: 'Estudios de la madre', sigB: 'Ciudad o campo', blind: 'Fuera de los datos: nutrición, enfermedades',
+    babies: 'bebés', ofAll: 'de los nacimientos', mapT: ['Nacen con menos de 2.500 g, de cada 100', 'por departamento de residencia · 2022'], avg: 'país', per100: 'de cada 100',
+    andes: 'Andes de altura', alt: '2.600 m', todo: 'Por estudiar', todoB: 'Altura · Bogotá',
   },
 } as const;
