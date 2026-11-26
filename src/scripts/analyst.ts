@@ -60,7 +60,7 @@ export function initAnalyst() {
     const out = turn('an', S.analyst);
     const wait = document.createElement('span'); wait.className = 'dots'; wait.textContent = S.thinking; out.append(wait);
     try {
-      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ history: history.slice(-6) }) });
+      const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ history: history.slice(-6) }), signal: AbortSignal.timeout(60_000) });
       if (r.status === 429) throw new Error('busy');
       if (!r.ok) throw new Error('down');
       const { answer } = await r.json();

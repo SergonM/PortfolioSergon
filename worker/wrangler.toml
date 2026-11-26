@@ -6,7 +6,7 @@ workers_dev = true
 [vars]
 # The browser origins allowed to call the analyst. The Gemini key is a secret, never a var.
 ALLOWED_ORIGINS = "https://sergonm.github.io,http://localhost:4321,http://localhost:4322"
-GEMINI_MODEL = "gemini-flash-latest"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 # At most 8 questions per minute per visitor (Workers rate limiting binding).
 [[ratelimits]]
