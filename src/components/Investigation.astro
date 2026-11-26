@@ -1,0 +1,323 @@
+---
+import { inv, steps, fig } from '../data/investigation';
+import { rosette } from '../lib/guilloche';
+import type { Locale } from '../i18n/strings';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const f = fig[locale];
+const fmt = (n: number, d = 0) => n.toLocaleString(locale === 'es' ? 'es-CO' : 'en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+// ---------- figure geometry (viewBox 600 × 560), all computed at build time ----------
+// 01 the line: 0–5,000 g on x
+const gx = (g: number) => 40 + g * 0.104;
+const bandTicks = [1000, 1500, 2000, 2500, 3000, 3500, 4000];
+
+// 02 the years
+const years = [2017, 2018, 2019, 2020, 2021, 2022].map((y, i) => ({
+  y, used: y !== 2019 && y !== 2020, x: 52 + (i % 3) * 170, top: 205 + Math.floor(i / 3) * 135, i,
+}));
+
+// 03 the star schema
+const dims = f.dims.map((label, i) => {
+  const a = ((-90 + i * 60) * Math.PI) / 180;
+  return { label, i, dx: Math.round(Math.cos(a) * 205), dy: Math.round(Math.sin(a) * 195) };
+});
+
+// 04–05 the bell: standard normal, z on [-4, 5] for the first test, [-4, 34] for the second
+const X0 = 40, X1 = 560, BASE = 440, PEAK = 235;
+const zx = (z: number, max = 5) => X0 + ((z + 4) / (max + 4)) * (X1 - X0);
+const pdf = (z: number) => Math.exp(-(z * z) / 2);
+const pts: string[] = [];
+for (let z = -4; z <= 5.0001; z += 0.05) pts.push(`${zx(z).toFixed(1)} ${(BASE - pdf(z) * PEAK).toFixed(1)}`);
+const bell = `M${pts.join(' L')}`;
+const tailPts: string[] = [];
+for (let z = 1.96; z <= 5.0001; z += 0.05) tailPts.push(`${zx(z).toFixed(1)} ${(BASE - pdf(z) * PEAK).toFixed(1)}`);
+const tail = `M${zx(1.96).toFixed(1)} ${BASE} L${tailPts.join(' L')} L${zx(5)} ${BASE} Z`;
+const zA = 4.0371, zB = 31.863;
+const ax = zx(zA), axWide = zx(zA, 34), bx = zx(zB, 34);
+const shrink = 9 / 38;
+const ticksA = [-2, 0, 2, 4];
+const ticksB = [0, 10, 20, 30];
+
+// the 222 zeros of p = 8.69e-223, set as a block of type
+const zeroLine = 47;
+const zeroText = f.zeros + '0'.repeat(222) + f.zerosTail;
+const zeroLines: string[] = [];
+for (let i = 0; i < zeroText.length; i += zeroLine) zeroLines.push(zeroText.slice(i, i + zeroLine));
+
+const ros = rosette(96, 37, 70, 37, 2200);
+---
+<section id="investigation" class="inv" data-inv aria-labelledby="inv-title">
+  <div class="wrap head">
+    <svg class="ros" viewBox="-200 -200 400 400" aria-hidden="true" focusable="false"><path d={ros} /></svg>
+    <p class="label kicker">{inv.kicker[locale]}</p>
+    <h2 id="inv-title" data-typeset>{inv.title[locale]}</h2>
+    <p class="label byline">{inv.byline[locale]}</p>
+    <p class="lede">{inv.lede[locale]}</p>
+  </div>
+
+  <div class="scrolly">
+    <figure class="stage" data-stage data-state="line" aria-hidden="true">
+      <svg viewBox="0 0 600 560" focusable="false">
+        <defs>
+          <pattern id={`hatch-${locale}`} width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="9" class="hatch" />
+          </pattern>
+        </defs>
+
+        <!-- 01 the line -->
+        <g class="layer" data-on="line">
+          <rect class="lowzone" x={gx(0)} y="170" width={gx(2500) - gx(0)} height="230" fill={`url(#hatch-${locale})`} />
+          <text class="zone-l" x={(gx(0) + gx(2500)) / 2} y="290" text-anchor="middle">{f.low}</text>
+          <text class="zone-r" x={(gx(2500) + gx(5000)) / 2} y="290" text-anchor="middle">{f.ok}</text>
+          <g class="most">
+            <path d={`M${gx(2500) + 4} 380 V372 H${gx(3500) - 4} V380`} />
+            <text x={(gx(2500) + gx(3500)) / 2} y="362" text-anchor="middle">{locale === 'es' ? 'la mayoría' : 'most births'}</text>
+          </g>
+          <line class="axis" x1={gx(0)} y1="400" x2={gx(5000)} y2="400" />
+          {bandTicks.map((g, i) => (
+            <g>
+              <line class="tick" x1={gx(g)} y1="400" x2={gx(g)} y2="408" />
+              <text class:list={['tl', { minor: ![0, 3, 6].includes(i) }]} x={gx(g)} y="428" text-anchor="middle">{f.bands[i]}</text>
+            </g>
+          ))}
+          <text class="tl unit" x={gx(5000)} y="452" text-anchor="end">{f.grams}</text>
+          <line class="redline grow" x1={gx(2500)} y1="130" x2={gx(2500)} y2="410" />
+          <text class="big red" x={gx(2500)} y="108" text-anchor="middle">{f.line}</text>
+        </g>
+
+        <!-- 02 the years -->
+        <g class="layer" data-on="years">
+          <text class="big" x="300" y="112" text-anchor="middle">{locale === 'es' ? '1.000.000+' : '1,000,000+'}</text>
+          <text class="tl" x="300" y="146" text-anchor="middle">{f.records}</text>
+          {years.map((t) => (
+            <g class:list={['tile', { off: !t.used }]} style={`--i:${t.i}`}>
+              <rect x={t.x} y={t.top} width="156" height="118" />
+              <text class="yr" x={t.x + 78} y={t.top + 66} text-anchor="middle">{t.y}</text>
+              <text class="tl" x={t.x + 78} y={t.top + 96} text-anchor="middle">{t.used ? `DANE · nac${t.y}` : f.outOfStudy}</text>
+            </g>
+          ))}
+        </g>
+
+        <!-- 03 the star schema -->
+        <g class="layer" data-on="schema">
+          <g transform="translate(300 285)">
+            {dims.map((d) => <line class="spoke" x1="0" y1="0" x2={d.dx} y2={d.dy} pathLength="1" style={`--i:${d.i}`} />)}
+            {dims.map((d) => (
+              <g class="node" style={`--x:${d.dx}px;--y:${d.dy}px;--i:${d.i}`}>
+                <rect x="-74" y="-21" width="148" height="42" />
+                <text class="nl" x="0" y="5" text-anchor="middle">{d.label}</text>
+              </g>
+            ))}
+            <g class="hub">
+              <rect x="-92" y="-38" width="184" height="76" />
+              <text class="hl1" x="0" y="2" text-anchor="middle">{f.centre}</text>
+              <text class="tl" x="0" y="24" text-anchor="middle">PESO_NAC</text>
+            </g>
+          </g>
+        </g>
+
+        <!-- 04–05 the bell -->
+        <g class="layer" data-on="z4 z32">
+          <g class="zeros">
+            {zeroLines.map((l, i) => <text x="44" y={30 + i * 21} style={`--i:${i}`}>{l}</text>)}
+          </g>
+          <g class="curve" style={`--shrink:${shrink}`}>
+            <path class="tail" d={tail} />
+            <path class="bell" d={bell} />
+            <line class="bar" x1={zx(1.96)} y1={BASE - 150} x2={zx(1.96)} y2={BASE} />
+          </g>
+          <text class="chance" x={zx(0)} y={BASE - PEAK - 14} text-anchor="middle">{f.chance}</text>
+          <text class="tl barl" x={zx(1.96) + 6} y={BASE - 156}>{f.bar}</text>
+          <line class="axis" x1={X0} y1={BASE} x2={X1} y2={BASE} />
+          <g class="ticks a">{ticksA.map((z) => <text class="tl" x={zx(z)} y={BASE + 24} text-anchor="middle">{z}</text>)}</g>
+          <g class="ticks b">{ticksB.map((z) => <text class="tl" x={zx(z, 34)} y={BASE + 24} text-anchor="middle">{z}</text>)}</g>
+          <text class="tl unit" x={X1} y={BASE + 48} text-anchor="end">Z</text>
+
+          <g class="mark a" style={`--dx:${(axWide - ax).toFixed(1)}px`}>
+            <line class="redline" x1={ax} y1="128" x2={ax} y2={BASE} />
+            <circle cx={ax} cy="128" r="5" />
+            <text class="ml full" x={ax - 12} y="134" text-anchor="end">{f.edu}</text>
+            <text class="mz full" x={ax - 12} y="162" text-anchor="end">Z = {fmt(zA, 2)}</text>
+            <text class="mz short" x={ax + 10} y="236">{fmt(zA, 2)}</text>
+          </g>
+          <g class="mark b">
+            <line class="redline" x1={bx} y1="226" x2={bx} y2={BASE} />
+            <circle cx={bx} cy="226" r="6" />
+            <text class="ml" x={bx - 10} y="252" text-anchor="end">{f.area}</text>
+            <text class="mz" x={bx - 10} y="282" text-anchor="end">Z = {fmt(zB, 2)}</text>
+          </g>
+        </g>
+
+        <!-- 06 what it means -->
+        <g class="layer" data-on="end">
+          <g class="stamp" style="--r:-8deg;--i:0">
+            <rect x="60" y="120" width="250" height="96" />
+            <rect class="in" x="66" y="126" width="238" height="84" />
+            <text class="st" x="185" y="180" text-anchor="middle">{f.sig}</text>
+            <text class="tl" x="185" y="246" text-anchor="middle">{f.sigA}</text>
+          </g>
+          <g class="stamp" style="--r:6deg;--i:1">
+            <rect x="290" y="250" width="250" height="96" />
+            <rect class="in" x="296" y="256" width="238" height="84" />
+            <text class="st" x="415" y="310" text-anchor="middle">{f.sig}</text>
+            <text class="tl" x="415" y="376" text-anchor="middle">{f.sigB}</text>
+          </g>
+          <g class="blind">
+            <rect x="70" y="430" width="460" height="52" />
+            <text class="tl" x="300" y="461" text-anchor="middle">{f.blind}</text>
+          </g>
+        </g>
+      </svg>
+    </figure>
+
+    <ol class="steps">
+      {steps.map((s, i) => (
+        <li class:list={['step', { first: i === 0 }]} data-inv-step={s.state}>
+          <div class="card">
+            <p class="label sk">{s.kicker[locale]}</p>
+            <h3>{s.title[locale]}</h3>
+            <p>{s.body[locale]}</p>
+            {s.note && <p class="note">{s.note[locale]}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+
+  <p class="wrap src label">{inv.source[locale]} <span>[PRJ-NEO]</span></p>
+</section>
+
+<style>
+  .inv {
+    --bg: #10201a; --fg: #e9e8df; --soft: #a9b7ad; --red: #e2614c; --och: #c89a3c; --line: rgba(233, 232, 223, .22);
+    background: var(--bg); color: var(--fg); margin-top: 6rem; padding-block: 6rem 3rem; position: relative; overflow: clip;
+  }
+  .head { position: relative; display: grid; gap: .9rem; padding-bottom: 2rem; }
+  .ros { position: absolute; right: -14%; top: -40%; width: min(70vw, 620px); opacity: .35; pointer-events: none; }
+  .ros path { fill: none; stroke: var(--och); stroke-width: .5; vector-effect: non-scaling-stroke; }
+  .kicker { color: var(--red); margin: 0; }
+  h2 { font-size: var(--step-5); max-width: 15ch; position: relative; }
+  .byline { color: var(--soft); margin: 0; }
+  .lede { margin: 0; max-width: var(--measure); color: #d4d8cf; position: relative; }
+
+  /* ---------- scrollytelling: sticky figure, steps scroll over it ---------- */
+  .scrolly { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
+  .stage { position: sticky; top: 0; height: 46svh; margin: 0; display: grid; place-items: center; padding: .5rem var(--gutter) 0; z-index: 1; background: linear-gradient(var(--bg) 85%, transparent); }
+  .stage svg { width: 100%; height: 100%; max-width: 780px; overflow: visible; }
+  .steps { list-style: none; margin: 0; padding: 0; position: relative; z-index: 2; }
+  .step { min-height: 100svh; display: flex; align-items: flex-end; padding: 0 var(--gutter-r) 3svh var(--gutter); }
+  .card { background: rgba(16, 32, 26, .94); border: 1px solid var(--line); border-top: 3px solid var(--red); padding: 1.15rem 1.15rem 1.3rem; max-width: 34rem; display: grid; gap: .6rem; }
+  .card p { margin: 0; }
+  .sk { color: var(--red); }
+  h3 { font-size: var(--step-3); font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.3rem); color: #f3f2ea; }
+  .note { font-size: var(--step--1); color: var(--soft); border-top: 1px dashed var(--line); padding-top: .6rem; }
+  :global(html.js) .step .card { opacity: .3; transition: opacity .5s; }
+  :global(html.js) .step.is-on .card { opacity: 1; }
+  .src { color: var(--soft); margin: 2rem auto 0; line-height: 1.7; }
+  .src span { color: var(--fg); }
+
+  @media (max-width: 900px) {
+    .card { font-size: .94rem; }
+    .tl { font-size: 18px; }
+    .tl.minor { display: none; }
+    .unit { font-size: 15px; }
+    .zone-l, .zone-r, .most text, .chance { font-size: 18px; }
+    .nl { font-size: 17px; }
+    .tile .tl { font-size: 15px; }
+    .ml { font-size: 29px; }
+    .mz { font-size: 20px; }
+    .stamp .tl { font-size: 20px; }
+    .blind .tl { font-size: 16px; }
+  }
+
+  @media (min-width: 901px) {
+    .scrolly { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); max-width: 1320px; margin-inline: auto; }
+    .stage { grid-column: 1; grid-row: 1; align-self: start; height: 100svh; padding: 4svh 2vw; background: none; }
+    .steps { grid-column: 2; grid-row: 1; }
+    .step { min-height: 100svh; align-items: center; padding: 0 var(--gutter-r) 0 1rem; }
+    .step.first { min-height: 100svh; }
+    .card { background: transparent; border-left: 0; border-right: 0; border-bottom: 0; padding-inline: 0; }
+  }
+
+  /* ---------- figure ---------- */
+  :where(svg text) { font-family: var(--font-mono); fill: var(--fg); }
+  .tl { font-size: 13px; fill: var(--soft); letter-spacing: .04em; }
+  .unit { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; }
+  .big { font-family: var(--font-display); font-size: 62px; fill: #f3f2ea; }
+  .big.red { fill: var(--red); }
+  .axis, .tick { stroke: var(--fg); stroke-width: 1.2; }
+  .hatch { stroke: var(--red); stroke-width: 1.4; opacity: .55; }
+  .lowzone { stroke: none; }
+  .zone-l, .zone-r { font-size: 15px; text-transform: uppercase; letter-spacing: .12em; }
+  .zone-l { fill: #f6d3cb; paint-order: stroke; stroke: var(--bg); stroke-width: 6px; }
+  .zone-r { fill: var(--soft); }
+  .most path { fill: none; stroke: var(--och); stroke-width: 1.5; }
+  .most text { font-size: 13px; fill: var(--och); }
+  .redline { stroke: var(--red); stroke-width: 2.5; }
+
+  .tile rect { fill: rgba(233, 232, 223, .06); stroke: var(--fg); stroke-width: 1.2; }
+  .tile .yr { font-family: var(--font-display); font-size: 40px; fill: #f3f2ea; }
+  .tile.off rect { fill: none; stroke: var(--soft); stroke-dasharray: 5 6; }
+  .tile.off .yr { fill: none; stroke: var(--soft); stroke-width: .8; }
+
+  .spoke { stroke: var(--och); stroke-width: 1.4; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .node rect { fill: var(--bg); stroke: var(--fg); stroke-width: 1.2; }
+  .nl { font-size: 13.5px; }
+  .hub rect { fill: var(--red); }
+  .hub .hl1 { font-family: var(--font-display); font-size: 25px; fill: #fff7f2; }
+  .hub .tl { fill: #ffd9cf; }
+
+  .bell { fill: rgba(233, 232, 223, .07); stroke: var(--fg); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .tail { fill: rgba(226, 97, 76, .35); }
+  .bar { stroke: var(--soft); stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; }
+  .chance { font-size: 14px; fill: var(--soft); text-transform: uppercase; letter-spacing: .12em; }
+  .mark circle { fill: var(--red); }
+  .ml { font-family: var(--font-display); font-size: 24px; fill: #f3f2ea; }
+  .mz { font-size: 15px; fill: var(--red); letter-spacing: .04em; }
+  .zeros text { font-size: 17px; fill: var(--och); letter-spacing: .02em; }
+  .stamp rect { fill: none; stroke: var(--red); stroke-width: 3; }
+  .stamp rect.in { stroke-width: 1; }
+  .stamp .st { font-family: var(--font-display); font-size: 40px; fill: var(--red); }
+  .stamp .tl { font-size: 15px; fill: var(--fg); }
+  .blind rect { fill: none; stroke: var(--soft); stroke-dasharray: 5 6; }
+
+  /* ---------- states: each layer shows in the states it lists; CSS does the choreography ---------- */
+  .layer { opacity: 0; transition: opacity .5s ease; }
+  [data-state='line'] [data-on~='line'],
+  [data-state='years'] [data-on~='years'],
+  [data-state='schema'] [data-on~='schema'],
+  [data-state='z4'] [data-on~='z4'],
+  [data-state='z32'] [data-on~='z32'],
+  [data-state='end'] [data-on~='end'] { opacity: 1; transition-delay: .25s; }
+
+  .grow { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); transition: transform 1s cubic-bezier(.2, .8, .2, 1) .35s; }
+  [data-state='line'] .grow { transform: none; }
+  .lowzone { transform-box: fill-box; transform-origin: 100% 50%; transform: scaleX(0); transition: transform 1.1s cubic-bezier(.6, 0, .2, 1) .7s; }
+  [data-state='line'] .lowzone { transform: none; }
+
+  .tile { transform-box: fill-box; transform-origin: center; transform: scale(1.6) rotate(-6deg); opacity: 0; transition: transform .45s cubic-bezier(.3, 1.6, .5, 1), opacity .2s; transition-delay: calc(.3s + var(--i) * .12s); }
+  [data-state='years'] .tile { transform: none; opacity: 1; }
+
+  .node { transform-box: fill-box; transform-origin: center; transform: translate(0, 0) scale(.3); opacity: 0; transition: transform .8s cubic-bezier(.2, 1.2, .3, 1), opacity .3s; transition-delay: calc(.3s + var(--i) * .07s); }
+  [data-state='schema'] .node { transform: translate(var(--x), var(--y)); opacity: 1; }
+  .spoke { transition: stroke-dashoffset .7s ease; transition-delay: calc(.7s + var(--i) * .07s); }
+  [data-state='schema'] .spoke { stroke-dashoffset: 0; }
+
+  .curve { transform-box: view-box; transform-origin: 40px 440px; transition: transform 1.3s cubic-bezier(.7, 0, .2, 1); }
+  [data-state='z32'] .curve { transform: scaleX(var(--shrink)); }
+  .chance, .barl, .ticks.a, .mark.a .full { transition: opacity .4s; }
+  [data-state='z32'] :is(.chance, .barl, .ticks.a, .mark.a .full) { opacity: 0; }
+  .ticks.b, .mark.a .short { opacity: 0; transition: opacity .5s .9s; }
+  [data-state='z32'] :is(.ticks.b, .mark.a .short) { opacity: 1; }
+  .mark.a { transition: transform 1.3s cubic-bezier(.7, 0, .2, 1); }
+  [data-state='z32'] .mark.a { transform: translateX(var(--dx)); }
+  .mark.b { opacity: 0; transform: translateX(90px); transition: transform .9s cubic-bezier(.2, .9, .3, 1) 1s, opacity .4s 1s; }
+  [data-state='z32'] .mark.b { opacity: 1; transform: none; }
+  .zeros text { opacity: 0; transition: opacity .3s; }
+  [data-state='z32'] .zeros text { opacity: .9; transition-delay: calc(1.2s + var(--i) * .18s); }
+
+  .stamp { transform-box: fill-box; transform-origin: center; transform: scale(2.4) rotate(calc(var(--r) - 18deg)); opacity: 0; transition: transform .45s cubic-bezier(.3, 1.5, .5, 1), opacity .2s; transition-delay: calc(.35s + var(--i) * .45s); }
+  [data-state='end'] .stamp { transform: rotate(var(--r)); opacity: 1; }
+</style>
