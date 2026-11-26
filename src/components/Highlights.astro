@@ -23,14 +23,14 @@ const tape = rows.map((k) => `${(k.prefix ?? '') + formatNumber(k.value, k.decim
 const msData = ms.map((m, i) => ({ when: m.when[locale], title: m.title[locale], body: m.body[locale], source: m.source, of: t.milestoneOf.replace('{i}', String(i + 1)).replace('{n}', String(n)) }));
 ---
 <section id="highlights" class="hl" aria-labelledby="hl-title">
-  <div class="wrap">
+  <div class="wrap ledger-wrap">
     <header class="hl-head">
       <p class="label kicker">{t.kpiKicker}</p>
       <h2 id="hl-title" data-typeset>{t.kpiTitle}</h2>
       <p class="lede">{t.kpiLede}</p>
     </header>
 
-    <ol class="ledger">
+    <ol class="ledger" data-ledger>
       {rows.map((k, i) => (
         <li class="row" data-row>
           <span class="rule" aria-hidden="true" data-rule></span>
@@ -42,14 +42,14 @@ const msData = ms.map((m, i) => ({ when: m.when[locale], title: m.title[locale],
             <span class="what">{k.label[locale]}</span>
             {k.note && <span class="note">{k.note[locale]}</span>}
           </span>
-          <span class="src label" title={sourceNames[locale][k.source]}>{k.source}</span>
+          <span class="src label" title={sourceNames[locale][k.source]}><svg class="tick" data-tick viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10.5" /><path d="M7 12.5l3.2 3.2L17.2 8.6" /></svg>{k.source}</span>
         </li>
       ))}
     </ol>
     <p class="audit" data-audit aria-hidden="true"><span>Audited ✓</span><small>SGM · 2026</small></p>
   </div>
 
-  <div class="terminal-band">
+  <div class="terminal-band" data-tone="dark">
     <div class="tape" aria-hidden="true"><div class="track">{[...tape, ...tape].map((s) => <span>{s}</span>)}</div></div>
     <div class="wrap terminal">
       <div class="chart-col">
@@ -91,27 +91,42 @@ const msData = ms.map((m, i) => ({ when: m.when[locale], title: m.title[locale],
   .lede { margin: 0; max-width: var(--measure); color: var(--ink-soft); }
 
   .ledger { list-style: none; margin: 0; padding: 0; }
-  .row { position: relative; display: grid; grid-template-columns: 2.5rem minmax(0, 5fr) minmax(0, 6fr) 5.5rem; gap: .5rem 1.5rem; align-items: baseline; padding-block: 1.4rem 1.2rem; }
-  .rule { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--ink); opacity: .35; transform-origin: left center; }
+  .row { position: relative; display: grid; grid-template-columns: 2.5rem minmax(0, 5fr) minmax(0, 5.4fr) 6.5rem; gap: .5rem 1.5rem; align-items: baseline; padding-block: 1.25rem 1.1rem; }
+  .rule { position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--ink); opacity: .35; transform-origin: left center; transition: opacity .3s; }
+  .rule::after { content: ''; position: absolute; inset: 0; background: var(--seal); transform: scaleX(0); transform-origin: left center; transition: transform .5s cubic-bezier(.6,0,.2,1); }
+  .row:hover .rule { opacity: 1; }
+  .row:hover .rule::after { transform: scaleX(1); }
   .idx { color: var(--seal); }
-  .fig { font-family: var(--font-display); font-size: clamp(2.8rem, 1.6rem + 5.4vw, 6.6rem); line-height: .9; letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; }
+  .fig { font-family: var(--font-display); font-size: clamp(2.9rem, 1.4rem + 6.6vw, 8.2rem); line-height: .9; letter-spacing: -.02em; white-space: nowrap; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; }
   .fig .pre { order: -1; }
-  .fig .suf { font-size: .42em; letter-spacing: 0; margin-left: .08em; color: var(--ink-soft); white-space: pre; }
+  .fig .suf { font-size: .42em; letter-spacing: 0; word-spacing: .12em; margin-left: .08em; color: var(--ink-soft); white-space: pre; }
   .fig .suf.tight { font-size: .62em; margin-left: .02em; color: var(--ink); }
   .txt { display: grid; gap: .35rem; min-width: 0; }
   .what { font-family: var(--font-display); font-size: var(--step-1); line-height: 1.22; }
   .note { font-size: var(--step--1); color: var(--ink-soft); }
-  .src { color: var(--ink-soft); text-align: right; }
+  .src { color: var(--ink-soft); text-align: right; display: inline-flex; gap: .45em; align-items: center; justify-content: flex-end; }
+  .tick { width: 1.35em; height: 1.35em; flex: none; color: #2f6b3a; }
+  .tick circle { fill: none; stroke: currentColor; stroke-width: 1.4; }
+  .tick path { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* mechanical counter, built by the motion script; the static HTML already shows the final value */
+  .num :global(.sr-only) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .num :global(.odo) { display: inline-block; line-height: 1; clip-path: inset(.03em -.04em); }
+  .num :global(.odo-c) { position: relative; display: inline-block; color: transparent; }
+  .num :global(.odo-sep) { color: inherit; }
+  .num :global(.odo-s) { position: absolute; left: 0; right: 0; top: 0; color: var(--ink); text-align: center; will-change: transform; }
   @media (max-width: 760px) {
     .row { grid-template-columns: 2rem minmax(0, 1fr); }
     .fig, .txt, .src { grid-column: 2; }
-    .src { text-align: left; }
+    .src { justify-content: flex-start; }
   }
-  .audit { position: absolute; right: max(16px, 6vw); top: 6rem; margin: 0; width: clamp(110px, 16vw, 190px); aspect-ratio: 1; border-radius: 50%; border: 3px double var(--seal);
+  /* The stamp lands on the last entries, in the white space between figure and text, so it is seen as it hits. */
+  .ledger-wrap { position: relative; }
+  .audit { position: absolute; right: 52.5%; bottom: 7rem; margin: 0; width: clamp(110px, 12vw, 170px); aspect-ratio: 1; border-radius: 50%; border: 3px double var(--seal);
            display: grid; place-content: center; text-align: center; color: var(--seal); transform: rotate(-12deg); mix-blend-mode: multiply; pointer-events: none; }
   .audit span { font-family: var(--font-display); font-size: clamp(1.1rem, 2.2vw, 1.8rem); }
   .audit small { font-size: .7rem; letter-spacing: .2em; }
-  @media (max-width: 760px) { .audit { top: 3.5rem; } }
+  @media (max-width: 760px) { .audit { position: relative; right: auto; bottom: auto; margin: 1.25rem 0 -2rem auto; width: 112px; } }
 
   /* ---------- terminal ---------- */
   .terminal-band { --t-bg: #0e120f; --t-fg: #e9e8df; --t-dim: #8f9a91; --t-line: #26302a; --t-up: #7fd18b;
